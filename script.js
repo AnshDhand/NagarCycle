@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Simulate Emergency Mode Detection (Listing Page)
+
     const emergencyPopup = document.getElementById('emergencyPopup');
     if (emergencyPopup && window.EmergencySystem) {
         setTimeout(() => {
@@ -140,3 +141,9 @@ function closeEmergencyPopup() {
         popup.classList.remove('active');
     }
 }
+
+// Discarded Waste Page logic
+window.scheduleDrop = function (facilityName) {
+    alert(`✅ Drop scheduled at ${facilityName}!\n\nA confirmation has been sent to your email with the drop-off timings. Ensure waste is sorted correctly before arrival.`);
+};
+
