@@ -3,22 +3,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const nav = document.querySelector('nav');
     const navLinks = document.querySelector('.nav-links');
 
-    // Create hamburger button dynamically to avoid manual HTML updates everywhere
+    // Create hamburger button dynamically
     if (nav && !document.querySelector('.nav-toggle')) {
+        console.log("Mobile nav script running...");
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'nav-toggle';
         toggleBtn.innerHTML = '☰';
         toggleBtn.ariaLabel = 'Toggle Navigation';
-        nav.insertBefore(toggleBtn, navLinks);
+
+        if (navLinks) {
+            nav.insertBefore(toggleBtn, navLinks);
+        } else {
+            nav.appendChild(toggleBtn);
+        }
 
         toggleBtn.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-            toggleBtn.innerHTML = navLinks.classList.contains('active') ? '✕' : '☰';
+            if (navLinks) navLinks.classList.toggle('active');
+            toggleBtn.innerHTML = (navLinks && navLinks.classList.contains('active')) ? '✕' : '☰';
         });
 
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
-            if (!nav.contains(e.target) && navLinks.classList.contains('active')) {
+            if (!nav.contains(e.target) && navLinks && navLinks.classList.contains('active')) {
                 navLinks.classList.remove('active');
                 toggleBtn.innerHTML = '☰';
             }
