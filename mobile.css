@@ -370,7 +370,7 @@ nav {
 /* Hero Section */
 .hero {
     background-color: #121212;
-    height: 600px;
+    height: 450px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -382,7 +382,7 @@ nav {
 
 @media (max-width: 768px) {
     .hero {
-        height: 500px;
+        height: 400px;
     }
 }
 
