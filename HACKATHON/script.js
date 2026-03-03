@@ -3,28 +3,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const nav = document.querySelector('nav');
     const navLinks = document.querySelector('.nav-links');
 
-    // Create hamburger button dynamically
-    if (nav && !document.querySelector('.nav-toggle')) {
-        console.log("Mobile nav script running...");
-        const toggleBtn = document.createElement('button');
+    // Find the existing hardcoded button, or create one if missing
+    let toggleBtn = document.querySelector('.nav-toggle');
+
+    if (nav && !toggleBtn) {
+        toggleBtn = document.createElement('button');
         toggleBtn.className = 'nav-toggle';
         toggleBtn.innerHTML = '☰';
-        toggleBtn.ariaLabel = 'Toggle Navigation';
-
+        toggleBtn.setAttribute('aria-label', 'Toggle Navigation');
         if (navLinks) {
             nav.insertBefore(toggleBtn, navLinks);
         } else {
             nav.appendChild(toggleBtn);
         }
+    }
 
-        toggleBtn.addEventListener('click', () => {
-            if (navLinks) navLinks.classList.toggle('active');
-            toggleBtn.innerHTML = (navLinks && navLinks.classList.contains('active')) ? '✕' : '☰';
+    // Always attach click listener to whatever toggle button we found or created
+    if (toggleBtn && navLinks) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navLinks.classList.toggle('active');
+            toggleBtn.innerHTML = navLinks.classList.contains('active') ? '✕' : '☰';
         });
 
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
-            if (!nav.contains(e.target) && navLinks && navLinks.classList.contains('active')) {
+            if (!nav.contains(e.target) && navLinks.classList.contains('active')) {
                 navLinks.classList.remove('active');
                 toggleBtn.innerHTML = '☰';
             }

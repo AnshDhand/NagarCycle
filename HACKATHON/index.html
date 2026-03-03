@@ -6,8 +6,155 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Waste-to-Resource Exchange Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style_fix.css">
+    <link rel="stylesheet" href="mobile.css">
     <link rel="stylesheet" href="css/trashtalk.css">
+    <style>
+        /* =========================================
+           CRITICAL RESPONSIVE OVERRIDES (INLINE)
+           Cannot be cached - always applied fresh
+        ========================================= */
+
+        /* --- Mobile Navigation (< 1024px) --- */
+        @media (max-width: 1024px) {
+            .nav-links {
+                position: fixed !important;
+                top: 0 !important;
+                left: -100% !important;
+                width: 75% !important;
+                height: 100vh !important;
+                background: #0F1115 !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 1.5rem !important;
+                padding: 80px 24px 24px !important;
+                z-index: 9999 !important;
+                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.6) !important;
+                transition: left 0.3s ease !important;
+                display: flex !important;
+                border-right: 1px solid #2D3340 !important;
+            }
+
+            .nav-links.active {
+                left: 0 !important;
+            }
+
+            .nav-links li {
+                width: 100% !important;
+            }
+
+            .nav-links a {
+                font-size: 1.1rem !important;
+                padding: 8px 0 !important;
+                display: block !important;
+            }
+
+            .nav-toggle {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: transparent !important;
+                border: 1px solid #8FD8A0 !important;
+                color: #8FD8A0 !important;
+                font-size: 1.4rem !important;
+                width: 40px !important;
+                height: 40px !important;
+                border-radius: 8px !important;
+                cursor: pointer !important;
+                z-index: 10000 !important;
+                order: 2 !important;
+            }
+
+            nav {
+                position: relative !important;
+                z-index: 10000 !important;
+            }
+
+            header {
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 9998 !important;
+            }
+        }
+
+        /* --- Small Phone (< 480px) --- */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem !important;
+            }
+
+            h2 {
+                font-size: 1.4rem !important;
+            }
+
+            .section-title {
+                font-size: 1.8rem !important;
+            }
+
+            .hero {
+                height: auto !important;
+                min-height: 400px !important;
+            }
+
+            .hero-buttons-container {
+                flex-direction: column !important;
+                width: 90% !important;
+                gap: 10px !important;
+                bottom: 20px !important;
+            }
+
+            .hero-buttons-container .btn {
+                width: 100% !important;
+                text-align: center !important;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr !important;
+            }
+
+            .visual-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .ladder-step,
+            .ladder-step.right-step {
+                flex-direction: column !important;
+                text-align: center !important;
+            }
+
+            .live-ticker {
+                flex-direction: column !important;
+                text-align: center !important;
+            }
+        }
+
+        /* --- Tablet (768px - 1024px) --- */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 12px !important;
+            }
+
+            .map-container {
+                height: 300px !important;
+            }
+
+            .marketplace-layout {
+                grid-template-columns: 1fr !important;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr !important;
+            }
+
+            .listing-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .tab-btn {
+                padding: 0.6rem 0.8rem !important;
+                font-size: 0.85rem !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -144,14 +291,28 @@
         </div>
     </footer>
 
-    <!-- Custom Scripts -->
     <script src="js/trashtalk.js"></script>
     <script src="js/matching-engine.js"></script>
     <script src="js/collector-portal.js"></script>
     <script src="js/eco-notifications.js"></script>
     <script src="js/emergency-mode.js"></script>
     <script src="script.js"></script>
-    <script type="module" src="js/nav-loader.js"></script>
+    <!-- nav-loader requires Firebase auth - only works on a server, not file:// -->
+    <script>
+        // Fallback: if page loaded locally and nav-loader fails, show Login button anyway
+        if (!window.location.href.startsWith('http')) {
+            const authItem = document.getElementById('auth-item');
+            if (authItem && !authItem.hasAttribute('data-loaded')) {
+                authItem.innerHTML = '<a href="login.html" class="btn btn-primary" style="padding:4px 12px;font-size:0.9rem;color:black;">Login</a>';
+            }
+        } else {
+            // On a server, load nav-loader normally
+            const s = document.createElement('script');
+            s.type = 'module';
+            s.src = 'js/nav-loader.js';
+            document.body.appendChild(s);
+        }
+    </script>
 </body>
 
 </html>
