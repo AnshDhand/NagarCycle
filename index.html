@@ -6,8 +6,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Waste-to-Resource Exchange Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="mobile.css">
     <link rel="stylesheet" href="css/trashtalk.css">
+    <style>
+        @media (max-width: 1024px) {
+            .nav-links {
+                position: fixed !important;
+                top: 0 !important;
+                left: -100% !important;
+                width: 75% !important;
+                height: 100vh !important;
+                background: #0F1115 !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 1.5rem !important;
+                padding: 80px 24px 24px !important;
+                z-index: 9999 !important;
+                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.6) !important;
+                transition: left 0.3s ease !important;
+                display: flex !important;
+                border-right: 1px solid #2D3340 !important;
+            }
+
+            .nav-links.active {
+                left: 0 !important;
+            }
+
+            .nav-links li {
+                width: 100% !important;
+            }
+
+            .nav-links a {
+                font-size: 1.1rem !important;
+                padding: 8px 0 !important;
+                display: block !important;
+            }
+
+            .nav-toggle {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: transparent !important;
+                border: 1px solid #8FD8A0 !important;
+                color: #8FD8A0 !important;
+                font-size: 1.4rem !important;
+                width: 40px !important;
+                height: 40px !important;
+                border-radius: 8px !important;
+                cursor: pointer !important;
+                z-index: 10000 !important;
+            }
+
+            header {
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 9998 !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem !important;
+            }
+
+            h2 {
+                font-size: 1.4rem !important;
+            }
+
+            .section-title {
+                font-size: 1.8rem !important;
+            }
+
+            .hero {
+                height: auto !important;
+                min-height: 400px !important;
+            }
+
+            .hero-buttons-container {
+                flex-direction: column !important;
+                width: 90% !important;
+                gap: 10px !important;
+                bottom: 20px !important;
+            }
+
+            .hero-buttons-container .btn {
+                width: 100% !important;
+                text-align: center !important;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr !important;
+            }
+
+            .visual-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .ladder-step,
+            .ladder-step.right-step {
+                flex-direction: column !important;
+                text-align: center !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 12px !important;
+            }
+
+            .map-container {
+                height: 300px !important;
+            }
+
+            .marketplace-layout {
+                grid-template-columns: 1fr !important;
+            }
+
+            .listing-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -21,6 +140,7 @@
                     <span style="font-size: 1.5rem; font-weight: bold; color: var(--text-color);">नगर<span
                             style="font-family: sans-serif;">CYCLE</span></span>
                 </a>
+                <button class="nav-toggle" aria-label="Toggle Navigation">&#9776;</button>
                 <ul class="nav-links">
                     <li><a href="index.html" class="active">Home</a></li>
                     <li><a href="listing.html">List Waste</a></li>
