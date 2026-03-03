@@ -269,8 +269,21 @@
     <script src="js/collector-portal.js"></script>
     <script src="js/eco-notifications.js"></script>
     <script src="js/emergency-mode.js"></script>
+    <script src="script.js"></script>
+    <!-- nav-loader requires Firebase auth - fallback block -->
+    <script>
+        if (!window.location.href.startsWith('http')) {
+            const authItem = document.getElementById('auth-item');
+            if (authItem && !authItem.hasAttribute('data-loaded')) {
+                authItem.innerHTML = '<a href="login.html" class="btn btn-primary" style="padding:4px 12px;font-size:0.9rem;color:black;">Login</a>';
+            }
+        } else {
+            const s = document.createElement('script');
+            s.type = 'module';
+            s.src = 'js/nav-loader.js';
+            document.body.appendChild(s);
+        }
+    </script>
 </body>
 
 </html>
-<script src="script.js"></script>
-<script type="module" src="js/nav-loader.js"></script>
