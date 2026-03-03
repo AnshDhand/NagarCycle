@@ -382,20 +382,13 @@ nav {
 
 @media (max-width: 768px) {
     .hero {
-        height: 350px;
+        height: 400px;
     }
 }
 
 @media (max-width: 480px) {
     .hero {
-        height: 400px;
-        /* Give it space again so it's not squished vertically */
-    }
-
-    spline-viewer {
-        transform: scale(0.65);
-        /* Force scale down the entire 3D object to fit horizontal width */
-        transform-origin: center center;
+        height: 350px;
     }
 }
 
