@@ -152,7 +152,7 @@ window.initMap = async function () {
                         </div>
                     </div>
                     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-                        <button class="btn btn-primary btn-block" style="font-size: 0.9rem;">Schedule Drop</button>
+                        <button class="btn btn-primary btn-block" style="font-size: 0.9rem;" onclick="scheduleDrop('${site.name}')">Schedule Drop</button>
                         <button class="btn btn-secondary btn-block" style="font-size: 0.9rem;" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${site.lat},${site.lng}')">Navigate</button>
                     </div>
                 `;

@@ -78,10 +78,11 @@
                                 const lng = position.coords.longitude;
 
                                 // Fetch City Name (Reverse Geocoding)
-                                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                                fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`)
                                     .then(response => response.json())
                                     .then(data => {
-                                        const addr = data.address;
+                                        const city = data.city || data.locality || data.principalSubdivision;
+                                        const addr = {};
                                         // Construct full address: [Road/Suburb], [City/Town/Village], [State] [Postcode]
                                         const parts = [];
                                         if (addr.road || addr.suburb) parts.push(addr.road || addr.suburb);
@@ -89,7 +90,7 @@
                                         if (addr.state) parts.push(addr.state);
                                         if (addr.postcode) parts.push(addr.postcode);
 
-                                        const fullAddress = parts.length > 0 ? parts.join(', ') : "Unknown Location";
+                                        const fullAddress = city ? `${city}, ${data.countryCode || ''}` : "Unknown Location";
                                         statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">${fullAddress}</strong>`;
                                     })
                                     .catch((err) => {
