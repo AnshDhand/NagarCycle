@@ -388,13 +388,14 @@ nav {
 
 @media (max-width: 480px) {
     .hero {
-        height: 250px;
-        /* Reduced for true phones to prevent text crop */
+        height: 400px;
+        /* Give it space again so it's not squished vertically */
     }
 
     spline-viewer {
-        transform: scale(1.1);
-        /* Slight bump so the globe looks good while text fits horizontally */
+        transform: scale(0.65);
+        /* Force scale down the entire 3D object to fit horizontal width */
+        transform-origin: center center;
     }
 }
 
