@@ -382,7 +382,19 @@ nav {
 
 @media (max-width: 768px) {
     .hero {
-        height: 400px;
+        height: 350px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero {
+        height: 250px;
+        /* Reduced for true phones to prevent text crop */
+    }
+
+    spline-viewer {
+        transform: scale(1.1);
+        /* Slight bump so the globe looks good while text fits horizontally */
     }
 }
 
