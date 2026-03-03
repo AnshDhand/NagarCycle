@@ -11,6 +11,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Mobile Navigation Logic
+    const nav = document.querySelector('nav');
+    const navLinks = document.querySelector('.nav-links');
+    const toggleBtn = document.querySelector('.nav-toggle');
+
+    if (toggleBtn && navLinks) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navLinks.classList.toggle('active');
+            toggleBtn.innerHTML = navLinks.classList.contains('active') ? '✕' : '☰';
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (nav && !nav.contains(e.target) && navLinks.classList.contains('active')) {
+                navLinks.classList.remove('active');
+                toggleBtn.innerHTML = '☰';
+            }
+        });
+    }
+
     // Tab Logic (Dashboard & Others)
     const tabBtns = document.querySelectorAll('.tab-btn');
 
