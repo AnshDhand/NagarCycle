@@ -349,3 +349,240 @@
 </body>
 
 </html>
+<script src="js/matching-engine.js"></script>
+<script src="js/collector-portal.js"></script>
+<script src="js/eco-notifications.js"></script>
+<script src="js/emergency-mode.js"></script>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    let currentItem = null;
+    let cart = JSON.parse(localStorage.getItem('shoppingCart') || '[]');
+
+    // Unified Modal Function
+    window.openProductModal = function (title, price, img, seller, distance, id) {
+        currentItem = { title, price, img, seller, distance, id };
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalPrice').innerText = price;
+        document.getElementById('modalImage').src = img;
+        document.getElementById('modalSeller').innerText = seller;
+        document.getElementById('modalDistance').innerText = distance;
+        document.getElementById('modalDesc').innerText = "Premium quality " + title.toLowerCase() + " sourced from sustainable collection points. Hand-inspected for usability and value.";
+
+        document.getElementById('productModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeProductModal = function () {
+        document.getElementById('productModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+
+    window.toggleCart = function () {
+        const sidebar = document.getElementById('cartSidebar');
+        sidebar.classList.toggle('open');
+        renderCart();
+    };
+
+    window.addToCart = function () {
+        // Keep the original listing ID as 'listingId' if we want to distinguish,
+        // but for removal we need the original item ID.
+        cart.push({ ...currentItem, cartInstanceId: Date.now() });
+        saveCart();
+        closeProductModal();
+        if (window.showEcoQuote) window.showEcoQuote('purchase');
+        renderCart();
+        
+        // [NEW] Reward Points for Participating in Circular Economy
+        let ecoPoints = parseInt(localStorage.getItem('userEcoPoints') || '0');
+        ecoPoints += 10; // Give 10 points
+        localStorage.setItem('userEcoPoints', ecoPoints);
+        
+        // Open sidebar to show success
+        setTimeout(() => document.getElementById('cartSidebar').classList.add('open'), 500);
+    };
+
+    window.removeFromCart = function (id) {
+        cart = cart.filter(item => item.id !== id);
+        saveCart();
+        renderCart();
+    };
+
+    function saveCart() {
+        localStorage.setItem('shoppingCart', JSON.stringify(cart));
+        updateCartBadge();
+    }
+
+    function updateCartBadge() {
+        const badge = document.getElementById('cartCountBadge');
+        badge.innerText = cart.length;
+        badge.style.display = cart.length > 0 ? 'flex' : 'none';
+    }
+
+    function renderCart() {
+        const list = document.getElementById('cartItemsList');
+        const totalDisplay = document.getElementById('cartTotalDisplay');
+
+        if (cart.length === 0) {
+            list.innerHTML = `<div style="text-align: center; color: var(--text-light); opacity: 0.5; margin-top: 4rem;">Your cart is empty.</div>`;
+            totalDisplay.innerText = 'Rs.0';
+            return;
+        }
+
+        let total = 0;
+        list.innerHTML = cart.map(item => {
+            const priceNum = parseInt(item.price.replace('Rs.', ''));
+            total += priceNum;
+            return `
+                <div class="cart-item">
+                    <img src="${item.img}" alt="${item.title}">
+                    <div style="flex:1">
+                        <div style="font-weight:600">${item.title}</div>
+                        <div style="color:var(--primary-color)">${item.price}</div>
+                    </div>
+                    <div onclick="removeFromCart(${item.id})" style="cursor:pointer; color:#ef4444">🗑️</div>
+                </div>
+            `;
+        }).join('');
+
+        totalDisplay.innerText = 'Rs.' + total;
+    }
+
+    window.buyNow = function () {
+        localStorage.setItem('checkoutItem', JSON.stringify(currentItem));
+        window.location.href = 'payment.html';
+    };
+
+    window.checkoutCart = function () {
+        if (cart.length === 0) {
+            alert("Cart is empty!");
+            return;
+        }
+        // For simplicity, we checkout the first item or a summary
+        // In a real app, you'd pass the whole array
+        localStorage.setItem('checkoutItem', JSON.stringify(cart[0]));
+        window.location.href = 'payment.html';
+    };
+
+    function renderMarketplace(data) {
+        const grid = document.getElementById('marketplaceGrid');
+        const items = data || window.MarketplaceItems || [];
+
+        if (items.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-light); opacity: 0.5;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                <h3>No items match your filters.</h3>
+                <p>Try adjusting your search criteria.</p>
+                <button class="btn btn-secondary" onclick="clearFilters()" style="margin-top: 1rem;">Clear Filters</button>
+            </div>`;
+            return;
+        }
+
+        grid.innerHTML = items.map(item => `
+            <div class="listing-card" id="item-${item.id}">
+                <div class="listing-img">
+                    <span class="badge">Verified</span>
+                    <img src="${item.img}" alt="${item.title}">
+                </div>
+                <div class="listing-content">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">${item.title}</h3>
+                    <div class="listing-price">${item.price}</div>
+                    <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Quantity: ${item.quantity}</p>
+                    <button class="btn btn-primary btn-block" style="text-align: center; margin-top: 0.5rem;" 
+                        onclick="openProductModal('${item.title.replace(/'/g, "\\'")}', '${item.price}', '${item.img}', '${item.seller}', '${item.distance}', '${item.id}')">
+                        View Details
+                    </button>
+                    <div class="listing-meta">
+                        <span>🏢 ${item.seller}</span>
+                        <span>📍 ${item.distance}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.clearFilters = function () {
+        // Reset Inputs
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+        document.getElementById('distRange').value = 10;
+        document.getElementById('distVal').innerText = 10;
+        document.getElementById('minPrice').value = '';
+        document.getElementById('maxPrice').value = '';
+
+        // Reset Grid
+        renderMarketplace(window.MarketplaceItems);
+    };
+
+    window.applyFilters = function () {
+        const allItems = window.MarketplaceItems || [];
+
+        // 1. Waste Type
+        const allChecked = document.querySelector('input[name="type"][value="All"]').checked;
+        const typeChecks = Array.from(document.querySelectorAll('.type-filter:checked')).map(cb => cb.value.toLowerCase());
+
+        // 2. Condition
+        const condChecks = Array.from(document.querySelectorAll('.cond-filter:checked')).map(cb => cb.value.toLowerCase());
+
+        // 3. Distance
+        const maxDist = parseInt(document.getElementById('distRange').value);
+
+        // 4. Price
+        const minP = parseInt(document.getElementById('minPrice').value) || 0;
+        const maxP = parseInt(document.getElementById('maxPrice').value) || 999999;
+
+        const filtered = allItems.filter(item => {
+            // Type Match
+            const iType = String(item.type || "").toLowerCase();
+            const iTitle = String(item.title || "").toLowerCase();
+            const typeMatch = allChecked || typeChecks.length === 0 || typeChecks.some(t => iType.includes(t) || iTitle.includes(t));
+
+            // Condition Match
+            const iCond = String(item.condition || "").toLowerCase();
+            const condMatch = condChecks.length === 0 || condChecks.some(c => iCond.includes(c));
+
+            // Distance Match
+            const itemDist = parseFloat(item.distance) || 0; // "1.2 km" -> 1.2
+            const distMatch = itemDist <= maxDist;
+
+            // Price Match
+            const itemPrice = parseInt((item.price || "0").replace(/[^0-9]/g, ''));
+            const priceMatch = itemPrice >= minP && itemPrice <= maxP;
+
+            return typeMatch && condMatch && distMatch && priceMatch;
+        });
+
+        console.log("Filtered items:", filtered.length);
+        renderMarketplace(filtered);
+    };
+
+    // Filter Logic Event Listeners
+    window.toggleAllTypes = function (source) {
+        const checkboxes = document.querySelectorAll('.type-filter');
+        checkboxes.forEach(cb => cb.checked = false); // Uncheck others if 'All' is checked
+        applyFilters();
+    };
+
+    // Uncheck 'All Types' if specific type is clicked
+    document.querySelectorAll('.type-filter').forEach(cb => {
+        cb.addEventListener('change', function() {
+            if (this.checked) {
+                document.querySelector('input[name="type"][value="All"]').checked = false;
+            }
+            applyFilters();
+        });
+    });
+
+    document.querySelectorAll('.cond-filter').forEach(cb => {
+        cb.addEventListener('change', applyFilters);
+    });
+
+    document.getElementById('distRange').addEventListener('change', applyFilters);
+    document.getElementById('minPrice').addEventListener('change', applyFilters);
+    document.getElementById('maxPrice').addEventListener('change', applyFilters);
+
+    // Initial Load
+    renderMarketplace();
+    updateCartBadge();
+</script>
+

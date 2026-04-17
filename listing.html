@@ -559,6 +559,11 @@
                         window.ActiveOrders = currentOrders;
                         window.syncOrders();
                     }
+                    
+                    // [NEW] Reward Points for Listing Waste
+                    let ecoPoints = parseInt(localStorage.getItem('userEcoPoints') || '0');
+                    ecoPoints += 50; // Give 50 points
+                    localStorage.setItem('userEcoPoints', ecoPoints);
                 }
 
                 document.getElementById('successOverlay').style.display = 'flex';
@@ -599,6 +604,11 @@
                 const current = JSON.parse(localStorage.getItem('PendingDiscards') || '[]');
                 current.push(item);
                 localStorage.setItem('PendingDiscards', JSON.stringify(current));
+                
+                // [NEW] Reward Points for Discarding Waste
+                let ecoPoints = parseInt(localStorage.getItem('userEcoPoints') || '0');
+                ecoPoints += 20; // Give 20 points
+                localStorage.setItem('userEcoPoints', ecoPoints);
 
                 window.location.href = 'discarded.html';
             };
