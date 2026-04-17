@@ -5,7 +5,7 @@ require('dotenv').config();
 console.log("🔑 Gemini Key length:", (process.env.GEMINI_API_KEY || "").length);
 console.log("🔑 HF Token length:", (process.env.HF_API_TOKEN || "").length);
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 /**
  * Hugging Face Analysis (Fallback)
@@ -112,7 +112,7 @@ async function analyzeWaste(imageBuffer, mimeType) {
         };
 
         const result = await model.generateContent([
-            "Return JSON only: {primaryCategory, subCategory, isSellingAdvisable, recommendedAction, estimatedRecoveryValue, environmentalImpact, confidence, quality_score, analysis}",
+            "Analyze the waste in this image. Return ONLY a valid JSON object matching exactly this structure: { \"primaryCategory\": \"text\", \"subCategory\": \"text\", \"isSellingAdvisable\": \"Yes/No\", \"recommendedAction\": \"text\", \"estimatedRecoveryValue\": \"text\", \"environmentalImpact\": \"text\", \"confidence\": 0.95, \"quality_score\": 5, \"analysis\": \"detailed text based on condition\" }. CRITICAL RULE: 'confidence' MUST be a decimal number between 0 and 1. 'quality_score' MUST be an integer number between 1 and 10, DO NOT use words.",
             imagePart
         ]);
         const response = await result.response;
@@ -123,6 +123,7 @@ async function analyzeWaste(imageBuffer, mimeType) {
 
     } catch (error) {
         console.warn("❌ Gemini Failed:", error.message);
+        console.error("Full AI Error Object:", error);
 
         // Check if HF token exists
         if (process.env.HF_API_TOKEN) {
