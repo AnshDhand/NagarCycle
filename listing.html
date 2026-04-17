@@ -77,29 +77,45 @@
                                 const lat = position.coords.latitude;
                                 const lng = position.coords.longitude;
 
-                                // Fetch City Name (Reverse Geocoding)
-                                fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`)
+                                // Fetch Precise Location (Town, City, State, Nation) using OpenStreetMap as geocoding provider
+                                fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
                                     .then(response => response.json())
                                     .then(data => {
-                                        const city = data.city || data.locality || data.principalSubdivision;
-                                        const addr = {};
-                                        // Construct full address: [Road/Suburb], [City/Town/Village], [State] [Postcode]
-                                        const parts = [];
-                                        if (addr.road || addr.suburb) parts.push(addr.road || addr.suburb);
-                                        if (addr.city || addr.town || addr.village) parts.push(addr.city || addr.town || addr.village);
-                                        if (addr.state) parts.push(addr.state);
-                                        if (addr.postcode) parts.push(addr.postcode);
-
-                                        const fullAddress = city ? `${city}, ${data.countryCode || ''}` : "Unknown Location";
-                                        statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">${fullAddress}</strong>`;
+                                        if(data && data.address) {
+                                            const addr = data.address;
+                                            const town = addr.neighbourhood || addr.suburb || addr.residential || addr.village || addr.town || addr.district || addr.borough || '';
+                                            const city = addr.city || addr.county || addr.state_district || '';
+                                            const state = addr.state || '';
+                                            
+                                            // Format precise location (Town, City, State)
+                                            const parts = [town, city, state].filter(Boolean);
+                                            const formattedLocation = [...new Set(parts)].join(", ");
+                                            
+                                            statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">${formattedLocation}</strong>`;
+                                        } else {
+                                            throw new Error("Address not found");
+                                        }
                                     })
                                     .catch((err) => {
                                         console.error(err);
                                         statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">${lat.toFixed(4)}, ${lng.toFixed(4)}</strong>`;
                                     });
 
-                                buyerAlert.style.display = 'block'; // Show fake buyer alert
-                                buyerAlert.innerHTML = `<span style="color: var(--primary-color);">●</span> <strong>${Math.floor(Math.random() * 5) + 2} Active Buyers</strong> found near you.`;
+                                // Fetch real active buyers count from backend
+                                buyerAlert.style.display = 'block';
+                                buyerAlert.innerHTML = `<span style="color: var(--primary-color);">●</span> Scanning for active buyers...`;
+                                
+                                fetch(`/api/buyers/nearby?lat=${lat}&lng=${lng}&radius=5`)
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        if (data.count !== undefined) {
+                                            buyerAlert.innerHTML = `<span style="color: var(--primary-color);">●</span> <strong>${data.count} Active Buyers</strong> found within ${data.radiusKm}km.`;
+                                        }
+                                    })
+                                    .catch(err => {
+                                        console.error("Failed to fetch buyers:", err);
+                                        buyerAlert.innerHTML = `<span style="color: var(--warning-color);">●</span> Unable to verify active buyers nearby.`;
+                                    });
                             },
                             (error) => {
                                 statusText.textContent = "Unable to retrieve location. Please allow access.";
@@ -120,6 +136,59 @@
                     and listing.</p>
 
                 <form>
+                    <!-- Image Upload -->
+                    <div class="form-group">
+                        <label class="form-label">Upload Images</label>
+                        <div
+                            style="border: 2px dashed var(--border-color); padding: 2rem; text-align: center; border-radius: var(--radius-md); background: var(--bg-color); position: relative;">
+                            <input type="file" id="wasteImage" accept="image/*"
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                            <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">📷</span>
+                            <p style="margin-bottom: 0;" id="uploadText">Click or drag photos here</p>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <!-- Quantity -->
+                        <div class="form-group">
+                            <label class="form-label">Quantity</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="number" id="quantityInput" class="form-control" placeholder="e.g. 50" min="0.1">
+                                <select id="unitSelect" class="form-control" style="width: 100px;">
+                                    <option>kg</option>
+                                    <option>units</option>
+                                    <option>tons</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Condition -->
+                        <div class="form-group">
+                            <label class="form-label">Condition</label>
+                            <select id="conditionSelect" class="form-control">
+                                <option>Segregated (Clean)</option>
+                                <option>Mixed (Needs Sorting)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="button" id="performAssessmentBtn" class="btn btn-primary" style="width: 100%;">Perform Assessment</button>
+                        <p id="assessmentError" style="color: #ef4444; display: none; margin-top: 10px; font-size: 0.9rem; text-align: center;"></p>
+                    </div>
+
+                    <!-- Auto-Tag Preview -->
+                    <div id="pricingResult" class="auto-tag-preview"
+                        style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 255, 157, 0.2); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem; box-shadow: var(--glow);">
+                        <div id="aiAssessmentArea">
+                            <h4 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1.1rem;">AI
+                                Assessment Preview</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-light);">Upload an image for automated
+                                evaluation.</p>
+                        </div>
+                        <div id="priceBreakdownArea"></div>
+                    </div>
+
                     <!-- Waste Type -->
                     <div id="classificationOutput" class="card"
                         style="display: none; margin-bottom: 1.5rem; background: rgba(0, 255, 157, 0.05); border: 1px solid var(--primary-color); box-shadow: var(--glow);">
@@ -149,78 +218,6 @@
                         </p>
                     </div>
 
-                    <div id="manualTypeSelection" class="form-group">
-                        <label class="form-label">Waste Type (Manual Override)</label>
-                        <div class="grid-2">
-                            <!-- ... radios ... -->
-                            <label class="radio-card">
-                                <input type="radio" name="wasteType" value="organic">
-                                <span class="radio-card-content">Organic</span>
-                            </label>
-                            <label class="radio-card">
-                                <input type="radio" name="wasteType" value="recyclable">
-                                <span class="radio-card-content">Recyclable</span>
-                            </label>
-                            <label class="radio-card">
-                                <input type="radio" name="wasteType" value="ewaste">
-                                <span class="radio-card-content">E-Waste</span>
-                            </label>
-                            <label class="radio-card">
-                                <input type="radio" name="wasteType" value="other">
-                                <span class="radio-card-content">Other</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="grid-2">
-                        <!-- Quantity -->
-                        <div class="form-group">
-                            <label class="form-label">Quantity</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="number" id="quantityInput" class="form-control" placeholder="e.g. 50">
-                                <select id="unitSelect" class="form-control" style="width: 100px;">
-                                    <option>kg</option>
-                                    <option>units</option>
-                                    <option>tons</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Condition -->
-                        <div class="form-group">
-                            <label class="form-label">Condition</label>
-                            <select id="conditionSelect" class="form-control">
-                                <option>Segregated (Clean)</option>
-                                <option>Mixed (Needs Sorting)</option>
-                            </select>
-                        </div>
-                    </div>
-
-
-
-                    <!-- Image Upload -->
-                    <div class="form-group">
-                        <label class="form-label">Upload Images</label>
-                        <div
-                            style="border: 2px dashed var(--border-color); padding: 2rem; text-align: center; border-radius: var(--radius-md); background: var(--bg-color); position: relative;">
-                            <input type="file" id="wasteImage" accept="image/*"
-                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
-                            <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">📷</span>
-                            <p style="margin-bottom: 0;" id="uploadText">Click or drag photos here</p>
-                        </div>
-                    </div>
-
-                    <!-- Auto-Tag Preview -->
-                    <div id="pricingResult" class="auto-tag-preview"
-                        style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 255, 157, 0.2); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem; box-shadow: var(--glow);">
-                        <div id="aiAssessmentArea">
-                            <h4 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1.1rem;">AI
-                                Assessment Preview</h4>
-                            <p style="font-size: 0.9rem; color: var(--text-light);">Upload an image for automated
-                                evaluation.</p>
-                        </div>
-                        <div id="priceBreakdownArea"></div>
-                    </div>
 
                     <div id="listingActions"
                         style="text-align: right; display: none; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
@@ -362,24 +359,7 @@
             const impactText = document.getElementById('impactText');
             impactText.innerText = `🌍 Impact: ${result.environmentalImpact}`;
 
-            // Sync Manual Override Radios
-            const typeMap = {
-                'recyclable waste': 'recyclable',
-                'organic waste': 'organic',
-                'e-waste': 'ewaste',
-                'construction & demolition waste': 'recyclable',
-                'hazardous / special waste': 'other',
-                'non-recyclable / residual waste': 'other'
-            };
 
-            const radioValue = typeMap[aiDetectedType] || 'other';
-            const radio = document.querySelector(`input[name="wasteType"][value="${radioValue}"]`);
-            if (radio) radio.checked = true;
-
-            // LOCK INPUTS: Make Non-Changeable as requested
-            wasteRadios.forEach(r => r.disabled = true);
-            document.getElementById('manualTypeSelection').style.opacity = '0.6';
-            document.getElementById('manualTypeSelection').style.pointerEvents = 'none';
 
             // Show Analysis Result in the pricing box too
             document.getElementById('aiAssessmentArea').innerHTML = `
@@ -457,20 +437,62 @@
 
         // Event Listeners
         const fileInput = document.getElementById('wasteImage');
+        const assessmentBtn = document.getElementById('performAssessmentBtn');
+        
         if (fileInput) {
-            fileInput.addEventListener('change', async function (e) {
+            fileInput.addEventListener('change', function (e) {
                 if (this.files && this.files[0]) {
                     const file = this.files[0];
-                    document.getElementById('uploadText').innerText = "Analyzing " + file.name + "...";
+                    document.getElementById('uploadText').innerText = "Selected: " + file.name;
+                }
+            });
+        }
 
-                    try {
-                        const result = await window.PricingEngine.analyzeWasteImage(file);
-                        handleAIResult(result);
-                        document.getElementById('uploadText').innerText = "Analysis Complete! ✅";
-                    } catch (err) {
-                        console.error(err);
-                        document.getElementById('uploadText').innerText = "Error analyzing. Try again.";
+        if (assessmentBtn) {
+            assessmentBtn.addEventListener('click', async function () {
+                const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+                const qtyVal = document.getElementById('quantityInput').value;
+                const errorDisplay = document.getElementById('assessmentError');
+                
+                if (errorDisplay) {
+                    errorDisplay.style.display = 'none';
+                    errorDisplay.innerText = '';
+                }
+
+                if (!qtyVal || parseFloat(qtyVal) <= 0) {
+                    if (errorDisplay) {
+                        errorDisplay.innerText = "Error: Quantity is required and must be a positive value.";
+                        errorDisplay.style.display = 'block';
+                    } else {
+                        alert("Error: Quantity is required and must be a positive value.");
                     }
+                    return;
+                }
+
+                if (!file) {
+                    if (errorDisplay) {
+                        errorDisplay.innerText = "Error: Please upload an image first.";
+                        errorDisplay.style.display = 'block';
+                    } else {
+                        alert('Please upload an image first.');
+                    }
+                    return;
+                }
+                
+                document.getElementById('uploadText').innerText = "Analyzing " + file.name + "...";
+                assessmentBtn.disabled = true;
+                assessmentBtn.innerText = "Analyzing...";
+
+                try {
+                    const result = await window.PricingEngine.analyzeWasteImage(file);
+                    handleAIResult(result);
+                    document.getElementById('uploadText').innerText = "Analysis Complete! ✅";
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('uploadText').innerText = "Error analyzing. Try again.";
+                } finally {
+                    assessmentBtn.disabled = false;
+                    assessmentBtn.innerText = "Perform Assessment";
                 }
             });
         }
