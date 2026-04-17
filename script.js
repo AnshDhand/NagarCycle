@@ -133,6 +133,20 @@ document.addEventListener('DOMContentLoaded', () => {
             emergencyPopup.classList.add('active');
         }, 2000); // Trigger after 2 seconds
     }
+
+    // Check if we need to open the collector portal automatically (from Login selection)
+    if (localStorage.getItem('openCollectorOnLoad') === 'true') {
+        localStorage.removeItem('openCollectorOnLoad');
+        const triggerPortal = () => {
+            if (window.openCollectorPortal) {
+                window.openCollectorPortal();
+            } else {
+                // If the script isn't loaded yet, wait a bit
+                setTimeout(triggerPortal, 200);
+            }
+        };
+        triggerPortal();
+    }
 });
 
 function closeEmergencyPopup() {
