@@ -100,6 +100,20 @@
             margin-bottom: 1rem;
         }
 
+        .btn-locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(60%);
+            pointer-events: none;
+        }
+
+        .locked-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 0.4rem;
+            text-align: center;
+        }
+
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -184,16 +198,16 @@
         <div class="points-hero">
             <h2 style="color: var(--text-light); font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase;">
                 Environmental Points</h2>
-            <div id="userPoints" class="points-display">420</div>
+            <div id="userPoints" class="points-display">0</div>
 
             <div style="max-width: 600px; margin: 0 auto; position: relative; z-index: 1;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                     <span style="color: var(--primary-light);">Redeem your impact</span>
-                    <span style="color: var(--text-light);">Level 5 Eco-Warrior</span>
+                    <span id="userLevel" style="color: var(--text-light);">Level 1 · Beginner</span>
                 </div>
                 <div style="height: 8px; background: #333; border-radius: 4px; overflow: hidden;">
-                    <div
-                        style="width: 70%; height: 100%; background: var(--primary-color); box-shadow: 0 0 10px var(--primary-color);">
+                    <div id="progressBar"
+                        style="width: 0%; height: 100%; background: var(--primary-color); box-shadow: 0 0 10px var(--primary-color); transition: width 0.8s ease;">
                     </div>
                 </div>
             </div>
@@ -286,15 +300,15 @@
                 Your Lifetime Impact</h3>
             <div class="impact-stats">
                 <div class="impact-item">
-                    <div class="impact-value" style="color: var(--accent-color);">12.5 kg</div>
+                    <div id="impactLandfill" class="impact-value" style="color: var(--accent-color);">0 kg</div>
                     <div class="impact-label">Landfill Diverted</div>
                 </div>
                 <div class="impact-item">
-                    <div class="impact-value" style="color: var(--warning-color);">₹ 450</div>
+                    <div id="impactValue" class="impact-value" style="color: var(--warning-color);">₹ 0</div>
                     <div class="impact-label">Value Recovered</div>
                 </div>
                 <div class="impact-item">
-                    <div class="impact-value" style="color: var(--primary-color);">850</div>
+                    <div id="impactTotal" class="impact-value" style="color: var(--primary-color);">0</div>
                     <div class="impact-label">Total Points Earned</div>
                 </div>
             </div>
@@ -376,31 +390,93 @@
 
     <script type="module" src="js/nav-loader.js"></script>
     <script>
-        // State
+        // ── State ──────────────────────────────────────────────────────────
         let currentPoints = parseInt(localStorage.getItem('userEcoPoints') || '0');
         let selectedReward = null;
         let selectedCost = 0;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('userPoints').innerText = currentPoints;
-            
-            // Update "Total Points Earned"
-            const totalEarnedElements = document.querySelectorAll('.impact-item .impact-value');
-            if(totalEarnedElements && totalEarnedElements.length >= 3) {
-                const spent = parseInt(localStorage.getItem('spentEcoPoints') || '0');
-                totalEarnedElements[2].innerText = (currentPoints + spent);
-            }
-        });
+        // ── Level system (every 200 pts = 1 level, max shown: 10) ──────────
+        const LEVELS = [
+            { min: 0,    label: 'Level 1 · Beginner' },
+            { min: 100,  label: 'Level 2 · Recycler' },
+            { min: 300,  label: 'Level 3 · Eco Starter' },
+            { min: 600,  label: 'Level 4 · Green Citizen' },
+            { min: 1000, label: 'Level 5 · Eco-Warrior' },
+            { min: 1500, label: 'Level 6 · Champion' },
+            { min: 2000, label: 'Level 7 · Planet Saver' },
+        ];
 
-        // Functions
-        window.openRedeemModal = function (name, cost) {
-            if (currentPoints < cost) {
-                alert("Not enough points! Recycle more to earn.");
-                return;
+        function getLevel(pts) {
+            for (let i = LEVELS.length - 1; i >= 0; i--) {
+                if (pts >= LEVELS[i].min) return LEVELS[i];
             }
+            return LEVELS[0];
+        }
+
+        function getProgressPct(pts) {
+            // Find current and next level thresholds for progress bar
+            let curIdx = 0;
+            for (let i = LEVELS.length - 1; i >= 0; i--) {
+                if (pts >= LEVELS[i].min) { curIdx = i; break; }
+            }
+            if (curIdx >= LEVELS.length - 1) return 100; // max level
+            const curMin = LEVELS[curIdx].min;
+            const nextMin = LEVELS[curIdx + 1].min;
+            return Math.min(100, Math.floor(((pts - curMin) / (nextMin - curMin)) * 100));
+        }
+
+        // ── Render all dynamic UI based on currentPoints ───────────────────
+        function renderUI() {
+            // Points display
+            document.getElementById('userPoints').innerText = currentPoints;
+
+            // Level label
+            document.getElementById('userLevel').innerText = getLevel(currentPoints).label;
+
+            // Progress bar (tiny delay so CSS transition plays on load)
+            setTimeout(() => {
+                document.getElementById('progressBar').style.width = getProgressPct(currentPoints) + '%';
+            }, 100);
+
+            // Lifetime impact (estimate: every point ≈ 0.015 kg diverted, ₹ 0.53 value)
+            const spent = parseInt(localStorage.getItem('spentEcoPoints') || '0');
+            const totalEarned = currentPoints + spent;
+            document.getElementById('impactTotal').innerText = totalEarned;
+            document.getElementById('impactLandfill').innerText = (totalEarned * 0.015).toFixed(1) + ' kg';
+            document.getElementById('impactValue').innerText = '₹ ' + Math.floor(totalEarned * 0.53);
+
+            // Lock / unlock redeem buttons
+            document.querySelectorAll('.reward-card').forEach(card => {
+                const btn = card.querySelector('button.btn-primary');
+                if (!btn) return;
+                const costEl = card.querySelector('.reward-cost');
+                const cost = parseInt(costEl ? costEl.innerText : '9999');
+                const lockedLabel = card.querySelector('.locked-label');
+
+                if (currentPoints < cost) {
+                    btn.classList.add('btn-locked');
+                    if (!lockedLabel) {
+                        const lbl = document.createElement('div');
+                        lbl.className = 'locked-label';
+                        lbl.innerText = `Need ${cost - currentPoints} more pts`;
+                        btn.insertAdjacentElement('afterend', lbl);
+                    } else {
+                        lockedLabel.innerText = `Need ${cost - currentPoints} more pts`;
+                    }
+                } else {
+                    btn.classList.remove('btn-locked');
+                    if (lockedLabel) lockedLabel.remove();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', renderUI);
+
+        // ── Modal helpers ──────────────────────────────────────────────────
+        window.openRedeemModal = function (name, cost) {
+            if (currentPoints < cost) return; // button is locked, but guard anyway
             selectedReward = name;
             selectedCost = cost;
-
             document.getElementById('modalDesc').innerHTML = `
                 You are converting <strong style="color:var(--primary-color)">${cost} Points</strong> into <br>
                 <strong style="color:white; font-size:1.1rem; display:block; margin-top:0.5rem;">${name}</strong>
@@ -413,43 +489,40 @@
         };
 
         window.confirmRedemption = function () {
-            // Deduct Points
+            const prev = currentPoints;
             currentPoints -= selectedCost;
             localStorage.setItem('userEcoPoints', currentPoints);
-            
+
             let spent = parseInt(localStorage.getItem('spentEcoPoints') || '0');
             localStorage.setItem('spentEcoPoints', spent + selectedCost);
 
-            // Update UI
-            animateValue("userPoints", currentPoints + selectedCost, currentPoints, 1000);
-
-            // Close Confirm, Open Success
+            animateValue('userPoints', prev, currentPoints, 800);
             closeRedeemModal();
 
             document.getElementById('newBalance').innerText = `New Balance: ${currentPoints} Points`;
             document.getElementById('successModal').style.display = 'flex';
+
+            // Re-render locks/stats after deduction
+            setTimeout(renderUI, 850);
         };
 
         window.closeSuccessModal = function () {
             document.getElementById('successModal').style.display = 'none';
         };
 
-        // Number Animation
+        // ── Number animation ───────────────────────────────────────────────
         function animateValue(id, start, end, duration) {
             if (start === end) return;
+            const obj = document.getElementById(id);
             const range = end - start;
             let current = start;
-            const increment = end > start ? 1 : -1;
-            const stepTime = Math.abs(Math.floor(duration / Math.max(range, 1)));
-            const obj = document.getElementById(id);
-
-            const timer = setInterval(function () {
+            const increment = range > 0 ? 1 : -1;
+            const stepTime = Math.max(10, Math.abs(Math.floor(duration / Math.abs(range))));
+            const timer = setInterval(() => {
                 current += increment;
                 obj.innerText = current;
-                if (current == end) {
-                    clearInterval(timer);
-                }
-            }, stepTime > 10 ? stepTime : 10); // cap speed
+                if (current === end) clearInterval(timer);
+            }, stepTime);
         }
     </script>
 <script src="script.js"></script></body>
