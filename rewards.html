@@ -379,9 +379,20 @@
     <script type="module" src="js/nav-loader.js"></script>
     <script>
         // State
-        let currentPoints = 420;
+        let currentPoints = parseInt(localStorage.getItem('userEcoPoints') || '0');
         let selectedReward = null;
         let selectedCost = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('userPoints').innerText = currentPoints;
+            
+            // Update "Total Points Earned"
+            const totalEarnedElements = document.querySelectorAll('.impact-item .impact-value');
+            if(totalEarnedElements && totalEarnedElements.length >= 3) {
+                const spent = parseInt(localStorage.getItem('spentEcoPoints') || '0');
+                totalEarnedElements[2].innerText = (currentPoints + spent);
+            }
+        });
 
         // Functions
         window.openRedeemModal = function (name, cost) {
@@ -406,6 +417,10 @@
         window.confirmRedemption = function () {
             // Deduct Points
             currentPoints -= selectedCost;
+            localStorage.setItem('userEcoPoints', currentPoints);
+            
+            let spent = parseInt(localStorage.getItem('spentEcoPoints') || '0');
+            localStorage.setItem('spentEcoPoints', spent + selectedCost);
 
             // Update UI
             animateValue("userPoints", currentPoints + selectedCost, currentPoints, 1000);
@@ -427,7 +442,7 @@
             const range = end - start;
             let current = start;
             const increment = end > start ? 1 : -1;
-            const stepTime = Math.abs(Math.floor(duration / range));
+            const stepTime = Math.abs(Math.floor(duration / Math.max(range, 1)));
             const obj = document.getElementById(id);
 
             const timer = setInterval(function () {
