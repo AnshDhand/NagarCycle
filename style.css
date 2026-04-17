@@ -207,6 +207,15 @@ nav {
     align-items: center;
 }
 
+#auth-item {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#auth-item.loaded {
+    opacity: 1;
+}
+
 .nav-links a {
     text-decoration: none;
     color: var(--text-light);

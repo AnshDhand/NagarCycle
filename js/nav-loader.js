@@ -47,4 +47,5 @@ onAuthStateChanged(auth, (user) => {
              <a href="login.html" class="btn btn-primary" style="padding: 4px 12px; font-size: 0.9rem; color: black;">Login</a>
         `;
     }
+    authItem.classList.add('loaded'); // Signal that loading is finished
 });

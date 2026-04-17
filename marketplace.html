@@ -219,13 +219,10 @@
                     <li><a href="index.html">Home</a></li>
                     <li><a href="listing.html">List Waste</a></li>
                     <li><a class="active" href="marketplace.html">Marketplace</a></li>
-                    <li><a href="rewards.html">Rewards</a></li>
                     <li><a href="discarded.html">Discard Waste</a></li>
+                    <li><a href="rewards.html">Rewards</a></li>
                     <li><a href="#" class="btn btn-secondary collector-portal-btn" style="padding: 10px 16px; font-size: 0.95rem; display: inline-block; width: 100%; text-align: center; margin-top: 5px; box-sizing: border-box;" onclick="openCollectorPortal()">Collector Portal</a></li>
-                    <!-- Auth Item (Dynamic) -->
-                    <li id="auth-item">
-                        <a href="login.html" class="btn btn-primary" style="padding: 10px 16px; font-size: 0.95rem; color: black; display: inline-block; width: 100%; text-align: center; margin-top: 5px; box-sizing: border-box;">Login</a>
-                    </li>
+                    <li id="auth-item"></li>
                 </ul>
             </nav>
         </div>
@@ -289,110 +286,67 @@
                 </div>
 
                 <button class="btn btn-primary btn-block" onclick="applyFilters()">Apply Filters</button>
-
-                <!-- Nearest Processors Widget -->
-                <div
-                    style="margin-top: 2rem; background: var(--card-bg); padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
-                    <h4 style="margin-bottom: 1rem;">Nearest Active Buyers</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        <li
-                            style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
-                            <span style="color: var(--success-color);">●</span> <strong>EcoPlast Recyclers</strong>
-                            <span style="color: var(--text-light); margin-left: auto;">0.8km</span>
-                        </li>
-                        <li
-                            style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
-                            <span style="color: var(--success-color);">●</span> <strong>City Scrap Metal</strong> <span
-                                style="color: var(--text-light); margin-left: auto;">1.2km</span>
-                        </li>
-                    </ul>
-                </div>
             </aside>
 
             <!-- Main Content -->
             <main>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h2>Fresh Listings</h2>
-                    <select class="form-control" style="width: auto;">
-                        <option>Sort by: Newest</option>
-                        <option>Sort by: Price Low to High</option>
-                        <option>Sort by: Distance</option>
-                    </select>
                 </div>
 
                 <div class="listing-grid" id="marketplaceGrid">
-                    <!-- Real Items Rendered Here -->
-                </div>
-
-                <div style="text-align: center; margin-top: 2rem;">
-                    <button class="btn btn-secondary">Load More</button>
+                    <!-- Items Rendered Here -->
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Product Details Modal -->
-    <div id="productModal" class="portal-overlay" style="display: none;">
-        <div class="portal-close" onclick="closeProductModal()">&times;</div>
-        <div class="portal-content" style="max-width: 800px;">
-            <div class="mission-card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem;">
-                <div id="modalImageContainer">
-                    <img id="modalImage" src="" alt="Product"
-                        style="width: 100%; height: 300px; object-fit: cover; border-radius: var(--radius-md);">
+    <footer>
+        <div class="container">
+            <div class="footer-content" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem;">
+                <div style="flex: 1; min-width: 250px;">
+                    <a href="index.html" class="logo" style="display: flex; align-items: center; text-decoration: none; margin-bottom: 1rem;">
+                        <img src="logo_final.jpg" alt="Logo" style="height: 40px; width: auto; margin-right: 10px; border-radius: 4px;">
+                        <span style="font-size: 1.2rem; font-weight: bold; color: var(--text-color);">नगर<span style="font-family: sans-serif;">CYCLE</span></span>
+                    </a>
                 </div>
-                <div>
-                    <h2 id="modalTitle" style="margin-top: 0; color: var(--primary-color);"></h2>
-                    <div id="modalPrice" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;"></div>
-                    <p id="modalDesc" style="color: var(--text-light); margin-bottom: 1.5rem;"></p>
-
-                    <div
-                        style="margin-bottom: 2rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm);">
-                        <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">Seller: <span id="modalSeller"
-                                style="color: var(--secondary-color);"></span></div>
-                        <div style="font-size: 0.9rem;">Distance: <span id="modalDistance"></span></div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <button class="btn btn-secondary btn-block" onclick="addToCart()">Add to Cart</button>
-                        <button class="btn btn-primary btn-block" onclick="buyNow()">Buy Now</button>
-                    </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <h4>Platform</h4>
+                    <ul style="list-style: none; padding: 0; margin-top: 1rem;">
+                        <li><a href="listing.html" style="color: var(--text-light); text-decoration: none;">List Waste</a></li>
+                        <li><a href="marketplace.html" style="color: var(--text-light); text-decoration: none;">Marketplace</a></li>
+                        <li><a href="discarded.html" style="color: var(--text-light); text-decoration: none;">Discard Waste</a></li>
+                        <li><a href="rewards.html" style="color: var(--text-light); text-decoration: none;">Rewards</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
-    </div>
+    </footer>
 
-    <!-- Floating Cart Icon -->
-    <div class="cart-toggle" onclick="toggleCart()">
-        🛒
-        <div id="cartCountBadge" class="cart-count">0</div>
-    </div>
-
-    <!-- Cart Sidebar -->
-    <div id="cartSidebar" class="cart-sidebar">
-        <div class="cart-header">
-            <h2 style="margin: 0;">Your Cart</h2>
-            <div class="portal-close" onclick="toggleCart()" style="position: static; font-size: 1.5rem;">&times;</div>
-        </div>
-
-        <div id="cartItemsList" class="cart-items">
-            <!-- Items rendered here -->
-            <div style="text-align: center; color: var(--text-light); opacity: 0.5; margin-top: 4rem;">
-                Your cart is empty.
-            </div>
-        </div>
-
-        <div class="cart-footer">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
-                <span style="color: var(--text-light);">Total Estimate</span>
-                <span id="cartTotalDisplay"
-                    style="font-size: 1.25rem; font-weight: bold; color: var(--primary-color);">Rs.0</span>
-            </div>
-            <button class="btn btn-primary btn-block" style="padding: 1rem;" onclick="checkoutCart()">CHECKOUT
-                MISSION</button>
-        </div>
-    </div>
-
-<script src="script.js"></script></body>
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    <script type="module" src="js/nav-loader.js"></script>
+    <script src="js/matching-engine.js"></script>
+    <script src="js/collector-portal.js"></script>
+    
+    <script>
+        function renderMarketplace(data) {
+            const grid = document.getElementById('marketplaceGrid');
+            const items = data || window.MarketplaceItems || [];
+            grid.innerHTML = items.map(item => `
+                <div class="listing-card">
+                    <div class="listing-img"><img src="${item.img}" alt="${item.title}"></div>
+                    <div class="listing-content">
+                        <h3>${item.title}</h3>
+                        <div class="listing-price">${item.price}</div>
+                        <div class="listing-meta"><span>📍 ${item.distance}</span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        window.onload = () => renderMarketplace();
+    </script>
+</body>
 
 </html>
 <script src="js/matching-engine.js"></script>
