@@ -88,8 +88,8 @@ async function analyzeWithHF(imageBuffer) {
             estimatedRecoveryValue: value,
             environmentalImpact: "Recovery restricted by fallback analysis accuracy.",
             confidence: confidence,
-            quality_score: 5,
-            analysis: `Identified as ${label} via Hugging Face Vision. (Fallback active)`
+            analysis: `Identified as ${label} via Hugging Face Vision. (Fallback active)`,
+            decisionSupport: "Manual verification recommended due to fallback analysis."
         };
 
     } catch (error) {
@@ -112,7 +112,7 @@ async function analyzeWaste(imageBuffer, mimeType) {
         };
 
         const result = await model.generateContent([
-            "Analyze the waste in this image. Return ONLY a valid JSON object matching exactly this structure: { \"primaryCategory\": \"text\", \"subCategory\": \"text\", \"isSellingAdvisable\": \"Yes/No\", \"recommendedAction\": \"text\", \"estimatedRecoveryValue\": \"text\", \"environmentalImpact\": \"text\", \"confidence\": 0.95, \"quality_score\": 5, \"analysis\": \"detailed text based on condition\" }. CRITICAL RULE: 'confidence' MUST be a decimal number between 0 and 1. 'quality_score' MUST be an integer number between 1 and 10, DO NOT use words.",
+            "Analyze the waste in this image. Return ONLY a valid JSON object matching exactly this structure: { \"primaryCategory\": \"text\", \"subCategory\": \"text\", \"isSellingAdvisable\": \"Yes/No\", \"recommendedAction\": \"text\", \"estimatedRecoveryValue\": \"text\", \"environmentalImpact\": \"text\", \"confidence\": 0.95, \"quality_score\": 5, \"analysis\": \"TL;DR concise assessment (max 2 lines)\", \"decisionSupport\": \"one line of actionable advice\" }. CRITICAL RULE: 'confidence' MUST be a decimal number between 0 and 1. 'quality_score' MUST be an integer number between 1 and 10, DO NOT use words.",
             imagePart
         ]);
         const response = await result.response;
@@ -141,7 +141,8 @@ async function analyzeWaste(imageBuffer, mimeType) {
                     environmentalImpact: "Error analyzing image.",
                     confidence: 0,
                     quality_score: 1,
-                    analysis: "AI Services are currently unavailable. Please enter details manually."
+                    analysis: "AI Services are currently unavailable. Please enter details manually.",
+                    decisionSupport: "Verify waste type and condition manually before listing."
                 };
             }
         }

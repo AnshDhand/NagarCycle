@@ -93,13 +93,10 @@
                     </div>
                 </div>
 
-                <!-- Decision Support Alert -->
                 <div class="decision-alert">
                     <strong style="color: var(--accent-color);">💡 Decision Support</strong>
-                    <p style="margin: 0.25rem 0 0; font-size: 0.95rem; color: var(--text-color); line-height: 1.5;">
-                        Selling for <strong style="color: var(--primary-color)">Reuse</strong> yields <strong>3x higher
-                            value</strong> than recycling materials.
-                        We recommend listing this on the marketplace immediately active buyers are nearby.
+                    <p id="decisionText" style="margin: 0.25rem 0 0; font-size: 0.95rem; color: var(--text-color); line-height: 1.5;">
+                        Analyzing optimal pathway...
                     </p>
                 </div>
 
@@ -156,6 +153,7 @@
             if (analysis) {
                 document.getElementById('summaryTitle').innerText = `${analysis.subCategory} (${analysis.primaryCategory})`;
                 document.getElementById('summarySub').innerText = analysis.analysis;
+                document.getElementById('decisionText').innerText = analysis.decisionSupport || "Optimal pathway suggested by AI analysis.";
 
                 const score = analysis.qualityScore || analysis.quality_score || 5;
                 document.getElementById('summaryScore').innerHTML = `${score * 10}<span style="font-size: 1rem; color: var(--text-light);">/100</span>`;
