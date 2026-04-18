@@ -33,12 +33,11 @@ app.post('/api/ai/chat', async (req, res) => {
     }
 });
 
-const admin = require('./config/firebaseAdmin');
-const db = admin.firestore();
-
 // Route: STABLE Database Count (Exact Firestore count())
 app.get('/api/buyers/count', async (req, res) => {
     try {
+        const admin = require('./config/firebaseAdmin');
+        const db = admin.firestore();
         const snapshot = await db.collection('users').count().get();
         const count = snapshot.data().count;
         res.json({ count });
