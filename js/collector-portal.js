@@ -23,7 +23,7 @@ const portalHTML = `
                 
                 <div style="margin: 2rem 0; padding: 1rem; background: rgba(56,189,248,0.1); border-radius: var(--radius-md); border-left: 3px solid var(--secondary-color)">
                     <small style="color: var(--secondary-color)">GPS COORDINATES ACQUIRED</small>
-                    <div style="font-size: 0.9rem;">📍 Lajpat Nagar, Delhi - 110024</div>
+                <div style="font-size: 0.9rem;" id="collector-gps-display">📍 Detecting location...</div>
                 </div>
 
                 <div class="travel-modes">
@@ -89,13 +89,8 @@ const portalHTML = `
                     </div>
                 </div>
 
-                <div class="map-view">
-                    <!-- Fake Map Element -->
-                    <div style="position: absolute; width: 100%; height: 100%; background: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 20px, transparent 20px, transparent 40px);"></div>
-                    <div class="route-path"></div>
-                    <div style="position: absolute; top: 40%; left: 20%; font-size: 1.5rem;">📍</div>
-                    <div style="position: absolute; top: 60%; right: 20%; font-size: 1.5rem;">🏢</div>
-                    <div style="position: absolute; bottom: 1rem; left: 1rem; color: var(--primary-color); font-weight: bold; background: black; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem;">ETA: 4 MINS</div>
+                <div class="map-view" id="portal-map" style="position: relative; width: 100%; height: 220px; border-radius: 8px; overflow: hidden; background: #1a1a1a;">
+                    <div id="portal-map-placeholder" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 0.9rem;">🗺️ Loading map...</div>
                 </div>
 
                 <div style="display: flex; gap: 1rem;">
@@ -176,17 +171,28 @@ function detectCollectorLocation() {
             .then(res => res.json())
             .then(data => {
                 const addr = data.address;
-                const city = addr.city || addr.town || addr.village || addr.suburb || "Delhi";
+                const city = addr.city || addr.town || addr.village || addr.suburb || "";
                 const road = addr.road || addr.suburb || "";
-                const display = road ? `${road}, ${city}` : city;
+                const display = road ? `${road}, ${city}` : city || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
+                // Update dashboard label
                 const locEl = document.getElementById('collector-location');
                 if (locEl) locEl.innerText = "Location: " + display;
+
+                // Update login scene GPS box
+                const gpsEl = document.getElementById('collector-gps-display');
+                if (gpsEl) gpsEl.innerHTML = `📍 ${display}`;
             })
             .catch(err => {
+                const fallback = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
                 const locEl = document.getElementById('collector-location');
-                if (locEl) locEl.innerText = `Location: ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+                if (locEl) locEl.innerText = `Location: ${fallback}`;
+                const gpsEl = document.getElementById('collector-gps-display');
+                if (gpsEl) gpsEl.innerHTML = `📍 ${fallback}`;
             });
+    }, () => {
+        const gpsEl = document.getElementById('collector-gps-display');
+        if (gpsEl) gpsEl.innerHTML = `📍 Location access denied`;
     });
 }
 
@@ -195,7 +201,114 @@ window.openCollectorPortal = function () {
     portal.style.display = 'block';
     document.body.style.overflow = 'hidden';
     loadAvailableJobs();
+    // Pre-load the Maps API so it's ready when a job is accepted
+    loadPortalMapsAPI();
 };
+
+// Inject Google Maps API once
+function loadPortalMapsAPI() {
+    if (window._portalMapsLoaded || document.getElementById('portal-maps-script')) return;
+    const script = document.createElement('script');
+    script.id = 'portal-maps-script';
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCKge2gvtk2tARWibI2hoW3VRU4JGxRuhg&callback=_portalMapsReady';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+}
+
+window._portalMapsReady = function () {
+    window._portalMapsLoaded = true;
+    // If a map init was queued while the script was loading, run it now
+    if (window._pendingPortalMap) {
+        const { lat, lng, address } = window._pendingPortalMap;
+        window._pendingPortalMap = null;
+        renderPortalMap(lat, lng, address);
+    }
+};
+
+function initPortalMap(pickupLat, pickupLng, pickupAddress) {
+    if (window._portalMapsLoaded) {
+        renderPortalMap(pickupLat, pickupLng, pickupAddress);
+    } else {
+        // Queue it — will fire once _portalMapsReady is called
+        window._pendingPortalMap = { lat: pickupLat, lng: pickupLng, address: pickupAddress };
+        loadPortalMapsAPI();
+    }
+}
+
+function renderPortalMap(pickupLat, pickupLng, pickupAddress) {
+    const mapDiv = document.getElementById('portal-map');
+    if (!mapDiv || !window.google) return;
+
+    const placeholder = document.getElementById('portal-map-placeholder');
+    if (placeholder) placeholder.remove();
+
+    const DARK_STYLES = [
+        { elementType: 'geometry', stylers: [{ color: '#212121' }] },
+        { elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+        { elementType: 'labels.text.stroke', stylers: [{ color: '#212121' }] },
+        { featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: '#2c2c2c' }] },
+        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#000000' }] }
+    ];
+
+    const pickupPos = { lat: pickupLat, lng: pickupLng };
+    // Drop: Regional Aggregation Center (mocked ~2km away)
+    const dropPos = { lat: pickupLat + 0.018, lng: pickupLng + 0.012 };
+
+    const map = new google.maps.Map(mapDiv, {
+        center: pickupPos,
+        zoom: 14,
+        gestureHandling: 'cooperative',
+        disableDefaultUI: false,
+        styles: DARK_STYLES
+    });
+
+    // Pickup marker — green
+    new google.maps.Marker({
+        position: pickupPos,
+        map,
+        title: pickupAddress || 'Pickup Location',
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: '#8FD8A0',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#ffffff'
+        }
+    });
+
+    // Drop marker — blue
+    new google.maps.Marker({
+        position: dropPos,
+        map,
+        title: 'Regional Aggregation Center',
+        icon: {
+            path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+            scale: 6,
+            fillColor: '#38bdf8',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#ffffff'
+        }
+    });
+
+    // Route line between pickup and drop
+    new google.maps.Polyline({
+        path: [pickupPos, dropPos],
+        geodesic: true,
+        strokeColor: '#8FD8A0',
+        strokeOpacity: 0.9,
+        strokeWeight: 3,
+        map
+    });
+
+    // Fit both points
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(pickupPos);
+    bounds.extend(dropPos);
+    map.fitBounds(bounds);
+}
 
 window.loadAvailableJobs = function () {
     const jobList = document.getElementById('job-list');
@@ -234,8 +347,8 @@ window.loadAvailableJobs = function () {
 window.acceptJob = function (jobId) {
     const job = window.ActiveOrders.find(o => o.id === jobId);
     if (job) {
-        job.status = 'Assigned'; // LOK JOB
-        window.currentMissionId = jobId; // Store for retirement
+        job.status = 'Assigned';
+        window.currentMissionId = jobId;
         console.log(`Job ${jobId} locked and assigned.`);
         if (window.syncOrders) window.syncOrders();
 
@@ -255,6 +368,10 @@ window.acceptJob = function (jobId) {
         if (drop) drop.innerText = job.dropAddress || "Regional Center";
 
         nextScene('navigation');
+
+        // Render real map at the job's actual pickup coordinates
+        const loc = job.pickupLoc || { lat: 28.5, lng: 77.2 };
+        initPortalMap(loc.lat, loc.lng, job.pickupAddress);
     }
 };
 

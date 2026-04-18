@@ -17,8 +17,9 @@ onAuthStateChanged(auth, (user) => {
                 <img src="${photoURL}" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
                 <span style="color: var(--text-color); font-weight: 500; font-size: 0.9rem;">▾</span>
             </a>
-            <div class="dropdown-content" style="right: 0; left: auto; min-width: 150px;">
+            <div class="dropdown-content" style="right: 0; left: auto; min-width: 180px;">
                 <a href="dashboard.html">My Dashboard</a>
+                <a href="#" id="collector-portal-btn">Collector Portal</a>
                 <a href="#" id="sign-out-btn" style="color: var(--danger-color);">Sign Out</a>
             </div>
         `;
@@ -35,6 +36,20 @@ onAuthStateChanged(auth, (user) => {
                         window.location.href = 'index.html';
                     } catch (error) {
                         console.error("Sign Out Error", error);
+                    }
+                });
+            }
+
+            const collectorBtn = document.getElementById('collector-portal-btn');
+            if (collectorBtn) {
+                collectorBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof window.openCollectorPortal === 'function') {
+                        window.openCollectorPortal();
+                    } else {
+                        // collector-portal.js not on this page — bounce through index
+                        localStorage.setItem('openCollectorOnLoad', 'true');
+                        window.location.href = 'index.html';
                     }
                 });
             }
