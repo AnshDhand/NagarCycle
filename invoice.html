@@ -137,14 +137,15 @@
                 <span style="font-size: 1.5rem; font-weight: bold; color: #000;">नगर<span
                         style="font-family: sans-serif;">CYCLE</span></span>
             </div>
-            <div class="status-badge">Paid</div>
+            <div class="status-badge" id="paymentBadge">Paid</div>
         </div>
 
         <div class="invoice-grid">
             <div>
                 <p class="invoice-label">BILLED TO</p>
                 <div class="invoice-value" id="userName">User Name</div>
-                <div style="font-size: 0.9rem; color: #444; margin-top: 4px;">user@example.com</div>
+                <div id="userEmail" style="font-size: 0.9rem; color: #444; margin-top: 4px;">user@example.com</div>
+                <div style="font-size: 0.8rem; color: #777; margin-top: 2px;">Customer ID: <span id="userId">NC-USR-12345</span></div>
             </div>
             <div style="text-align: right;">
                 <p class="invoice-label">INVOICE NUMBER</p>
@@ -173,11 +174,6 @@
                     <td>1</td>
                     <td style="text-align: right;" id="itemPrice">₹0.00</td>
                 </tr>
-                <tr>
-                    <td>Platform Service Fee</td>
-                    <td>1</td>
-                    <td style="text-align: right;">₹5.00</td>
-                </tr>
             </tbody>
         </table>
 
@@ -188,7 +184,7 @@
                 <span id="subTotal">₹0.00</span>
             </div>
             <div class="total-row grand-total">
-                <span style="color: #000;">Total Paid:</span>
+                <span style="color: #000;" id="totalLabel">Grand Total:</span>
                 <span id="grandTotal">₹0.00</span>
             </div>
         </div>
@@ -223,9 +219,14 @@
             const date = new Date();
             document.getElementById('invoiceDate').innerText = date.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
 
-            // User Info (Mock or Real)
+            // User Info (Real from Auth)
             if (window.currentUser) {
                 document.getElementById('userName').innerText = window.currentUser.displayName || "Valued Customer";
+                document.getElementById('userEmail').innerText = window.currentUser.email || "user@example.com";
+                document.getElementById('userId').innerText = window.currentUser.uid ? ('NC-' + window.currentUser.uid.substring(0, 8).toUpperCase()) : "NC-GUEST-001";
+            } else {
+                // Fallback for Demo
+                document.getElementById('userId').innerText = "NC-USR-" + Math.floor(Math.random() * 90000 + 10000);
             }
 
             // Item Details
@@ -234,8 +235,22 @@
 
             const priceNum = parseInt(itemData.price.replace(/[^0-9]/g, '')) || 0;
             document.getElementById('itemPrice').innerText = '₹' + priceNum;
-            document.getElementById('subTotal').innerText = '₹' + (priceNum + 5);
-            document.getElementById('grandTotal').innerText = '₹' + (priceNum + 5);
+            document.getElementById('subTotal').innerText = '₹' + priceNum;
+            document.getElementById('grandTotal').innerText = '₹' + priceNum;
+
+            // Handle Payment Status
+            const status = localStorage.getItem('paymentStatus') || 'Paid';
+            const badge = document.getElementById('paymentBadge');
+            const label = document.getElementById('totalLabel');
+            
+            badge.innerText = status;
+            if (status === 'Payment Pending') {
+                badge.style.background = '#fef3c7'; // Amber/Yellow
+                badge.style.color = '#92400e';
+                label.innerText = 'Total Due:';
+            } else {
+                label.innerText = 'Total Paid:';
+            }
         });
     </script>
 <script src="script.js"></script></body>

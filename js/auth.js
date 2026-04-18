@@ -3,7 +3,7 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const authForm = document.getElementById('auth-form');
 const formTitle = document.getElementById('form-title');
@@ -49,10 +49,6 @@ authForm.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Processing...';
 
     try {
-        // Save selected portal for redirection
-        const selectedPortal = document.querySelector('input[name="portal-type"]:checked')?.value || 'user';
-        localStorage.setItem('targetPortal', selectedPortal);
-
         if (isLogin) {
             await signInWithEmailAndPassword(auth, email, password);
         } else {
@@ -69,10 +65,6 @@ authForm.addEventListener('submit', async (e) => {
 // Handle Google Login
 googleBtn.addEventListener('click', async () => {
     try {
-        // Default to user portal for Google login if not specified
-        if (!localStorage.getItem('targetPortal')) {
-            localStorage.setItem('targetPortal', 'user');
-        }
         await signInWithPopup(auth, googleProvider);
         // Redirect handled by onAuthStateChanged
     } catch (error) {
@@ -88,17 +80,8 @@ onAuthStateChanged(auth, async (user) => {
         const token = await user.getIdToken();
         localStorage.setItem('authToken', token); // Store for API calls
 
-        // Handle Portal Redirection
-        const targetPortal = localStorage.getItem('targetPortal') || 'user';
-        
-        if (targetPortal === 'collector') {
-            // Redirect to index and signal to open collector portal
-            localStorage.setItem('openCollectorOnLoad', 'true');
-            window.location.href = 'index.html';
-        } else {
-            // Redirect to user dashboard
-            window.location.href = 'dashboard.html';
-        }
+        // Redirect to dashboard
+        window.location.href = 'dashboard.html';
     }
 });
 

@@ -147,12 +147,12 @@
                 </div>
                 <div class="Summary-item">
                     <span>Platform Fee</span>
-                    <span>Rs.5</span>
+                    <span>Rs.0</span>
                 </div>
             `;
 
             const priceInt = parseInt(itemData.price.replace(/[^0-9]/g, '')) || 0;
-            const total = priceInt + 5;
+            const total = priceInt;
             document.getElementById('finalTotal').innerText = `Rs.${total}`;
         });
 
@@ -171,7 +171,7 @@
         }
 
         function startRazorpay() {
-            const amount = (parseInt(itemData.price.replace('Rs.', '')) + 5) * 100; // in paise
+            const amount = parseInt(itemData.price.replace(/[^0-9]/g, '')) * 100; // in paise
 
             const options = {
                 "key": "rzp_test_YOUR_KEY", // Replace with real key
@@ -181,7 +181,6 @@
                 "description": "Purchase of " + itemData.title,
                 "image": "nav_logo_black.png",
                 "handler": function (response) {
-                    alert("Payment Successful! ID: " + response.razorpay_payment_id);
                     completeOrder('Online');
                 },
                 "prefill": {
@@ -198,7 +197,6 @@
         }
 
         function completeOrder(method) {
-            alert(`Order Confirmed via ${method}! \nAI Matching Engine is assigning a collector.`);
 
             // Safety check for initialization
             if (!window.ActiveOrders) {
@@ -229,10 +227,12 @@
                 if (window.syncMarketplace) window.syncMarketplace();
             }
 
-            // Redirect to Invoice
-            // Wait slightly for creating the sense of "Processing"
+            // Store payment status for invoice
+            localStorage.setItem('paymentStatus', method === 'Cash' ? 'Payment Pending' : 'Paid');
+
+            // Redirect to Invoice using replace to prevent back-navigation to payment
             setTimeout(() => {
-                window.location.href = 'invoice.html';
+                window.location.replace('invoice.html');
             }, 1000);
         }
     </script>
