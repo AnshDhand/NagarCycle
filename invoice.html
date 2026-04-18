@@ -142,17 +142,16 @@
 
         <div class="invoice-grid">
             <div>
-                <p class="invoice-label">BILLED TO</p>
+                <p class="invoice-label">BILLED TO (BUYER)</p>
                 <div class="invoice-value" id="userName">User Name</div>
                 <div id="userEmail" style="font-size: 0.9rem; color: #444; margin-top: 4px;">user@example.com</div>
                 <div style="font-size: 0.8rem; color: #777; margin-top: 2px;">Customer ID: <span id="userId">NC-USR-12345</span></div>
             </div>
-            <div style="text-align: right;">
-                <p class="invoice-label">INVOICE NUMBER</p>
+            <div>
+                <p class="invoice-label">INVOICE DETAILS</p>
                 <div class="invoice-value" id="invoiceId">INV-001</div>
-                <br>
-                <p class="invoice-label">DATE</p>
-                <div class="invoice-value" id="invoiceDate">Oct 24, 2024</div>
+                <div id="invoiceDate" style="font-size: 0.9rem; color: #444; margin-top: 4px;">Oct 24, 2024</div>
+                <div style="font-size: 0.8rem; color: #777; margin-top: 2px;">Method: <span id="paymentMethodDisplay">Online</span></div>
             </div>
         </div>
 
@@ -206,16 +205,14 @@
     <script type="module" src="js/nav-loader.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const itemData = JSON.parse(localStorage.getItem('checkoutItem'));
+            const checkoutData = JSON.parse(localStorage.getItem('checkoutItem') || '[]');
 
-            if (!itemData) {
-                // Fallback for demo if accessed directly
+            if (checkoutData.length === 0) {
                 return;
             }
 
-            // Populate Data
+            // Populate Header Data
             document.getElementById('invoiceId').innerText = 'INV-' + Math.floor(Math.random() * 1000000);
-
             const date = new Date();
             document.getElementById('invoiceDate').innerText = date.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
 
@@ -225,31 +222,51 @@
                 document.getElementById('userEmail').innerText = window.currentUser.email || "user@example.com";
                 document.getElementById('userId').innerText = window.currentUser.uid ? ('NC-' + window.currentUser.uid.substring(0, 8).toUpperCase()) : "NC-GUEST-001";
             } else {
-                // Fallback for Demo
                 document.getElementById('userId').innerText = "NC-USR-" + Math.floor(Math.random() * 90000 + 10000);
             }
 
-            // Item Details
-            document.getElementById('itemName').innerText = itemData.title;
-            document.getElementById('itemSeller').innerText = 'Seller: ' + (itemData.seller || 'Verified Partner');
+            // Render Items Table
+            const tbody = document.querySelector('.line-items tbody');
+            tbody.innerHTML = '';
+            let subtotal = 0;
 
-            const priceNum = parseInt(itemData.price.replace(/[^0-9]/g, '')) || 0;
-            document.getElementById('itemPrice').innerText = '₹' + priceNum;
-            document.getElementById('subTotal').innerText = '₹' + priceNum;
-            document.getElementById('grandTotal').innerText = '₹' + priceNum;
+            checkoutData.forEach(item => {
+                const priceNum = parseInt(item.price.replace(/[^0-9]/g, '')) || 0;
+                subtotal += priceNum;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight: 600;">${item.title}</div>
+                        <div style="font-size: 0.85rem; color: #666;">Seller: ${item.seller || 'Verified Partner'}</div>
+                    </td>
+                    <td>1</td>
+                    <td style="text-align: right;">₹${priceNum}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('subTotal').innerText = '₹' + subtotal;
+            document.getElementById('grandTotal').innerText = '₹' + subtotal;
 
             // Handle Payment Status
             const status = localStorage.getItem('paymentStatus') || 'Paid';
             const badge = document.getElementById('paymentBadge');
             const label = document.getElementById('totalLabel');
+            const methodDisplay = document.getElementById('paymentMethodDisplay');
             
-            badge.innerText = status;
             if (status === 'Payment Pending') {
-                badge.style.background = '#fef3c7'; // Amber/Yellow
-                badge.style.color = '#92400e';
+                badge.innerText = 'UNPAID / COD';
+                badge.style.background = '#fee2e2'; // Light Red/Rose
+                badge.style.color = '#991b1b';
                 label.innerText = 'Total Due:';
+                methodDisplay.innerText = 'Cash on Pickup';
             } else {
+                badge.innerText = 'PAID';
+                badge.style.background = '#dcfce7'; // Green
+                badge.style.color = '#166534';
                 label.innerText = 'Total Paid:';
+                methodDisplay.innerText = 'UPI / Online';
             }
         });
     </script>

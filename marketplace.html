@@ -430,8 +430,8 @@
         setTimeout(() => document.getElementById('cartSidebar').classList.add('open'), 500);
     };
 
-    window.removeFromCart = function (id) {
-        cart = cart.filter(item => item.id !== id);
+    window.removeFromCart = function (instanceId) {
+        cart = cart.filter(item => item.cartInstanceId !== instanceId);
         saveCart();
         renderCart();
     };
@@ -459,7 +459,7 @@
 
         let total = 0;
         list.innerHTML = cart.map(item => {
-            const priceNum = parseInt(item.price.replace('Rs.', ''));
+            const priceNum = parseInt(item.price.replace(/[^0-9]/g, '')) || 0;
             total += priceNum;
             return `
                 <div class="cart-item">
@@ -468,7 +468,7 @@
                         <div style="font-weight:600">${item.title}</div>
                         <div style="color:var(--primary-color)">${item.price}</div>
                     </div>
-                    <div onclick="removeFromCart(${item.id})" style="cursor:pointer; color:#ef4444">🗑️</div>
+                    <div onclick="removeFromCart(${item.cartInstanceId})" style="cursor:pointer; color:#ef4444" title="Discard Item">🗑️</div>
                 </div>
             `;
         }).join('');
@@ -477,7 +477,7 @@
     }
 
     window.buyNow = function () {
-        localStorage.setItem('checkoutItem', JSON.stringify(currentItem));
+        localStorage.setItem('checkoutItem', JSON.stringify([currentItem]));
         window.location.href = 'payment.html';
     };
 
@@ -486,9 +486,7 @@
             alert("Cart is empty!");
             return;
         }
-        // For simplicity, we checkout the first item or a summary
-        // In a real app, you'd pass the whole array
-        localStorage.setItem('checkoutItem', JSON.stringify(cart[0]));
+        localStorage.setItem('checkoutItem', JSON.stringify(cart));
         window.location.href = 'payment.html';
     };
 
