@@ -13,7 +13,8 @@ router.post('/analyze', upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: 'No image provided' });
         }
 
-        const result = await analyzeWaste(req.file.buffer, req.file.mimetype);
+        const conditionDetails = req.body.conditionDetails || '';
+        const result = await analyzeWaste(req.file.buffer, req.file.mimetype, conditionDetails);
         res.json({ success: true, data: result });
 
     } catch (error) {

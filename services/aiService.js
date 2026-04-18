@@ -101,7 +101,7 @@ async function analyzeWithHF(imageBuffer) {
 /**
  * Logic to analyze waste using Google's Gemini 1.5 Flash Vision
  */
-async function analyzeWaste(imageBuffer, mimeType) {
+async function analyzeWaste(imageBuffer, mimeType, conditionDetails) {
     try {
         console.log("🚀 Attempting Gemini AI...");
         const imagePart = {
@@ -111,10 +111,13 @@ async function analyzeWaste(imageBuffer, mimeType) {
             }
         };
 
-        const result = await model.generateContent([
-            "Analyze the waste in this image. Return ONLY a valid JSON object matching exactly this structure: { \"primaryCategory\": \"text\", \"subCategory\": \"text\", \"isSellingAdvisable\": \"Yes/No\", \"recommendedAction\": \"text\", \"estimatedRecoveryValue\": \"text\", \"environmentalImpact\": \"text\", \"confidence\": 0.95, \"quality_score\": 5, \"analysis\": \"TL;DR concise assessment (max 2 lines)\", \"decisionSupport\": \"one line of actionable advice\" }. CRITICAL RULE: 'confidence' MUST be a decimal number between 0 and 1. 'quality_score' MUST be an integer number between 1 and 10, DO NOT use words.",
-            imagePart
-        ]);
+        const conditionContext = conditionDetails
+            ? `The seller has described the item condition as follows: "${conditionDetails}". Factor this description heavily into your quality_score and analysis.`
+            : '';
+
+        const prompt = `Analyze the waste in this image. ${conditionContext} Return ONLY a valid JSON object matching exactly this structure: { "primaryCategory": "text", "subCategory": "text", "isSellingAdvisable": "Yes/No", "recommendedAction": "text", "estimatedRecoveryValue": "text", "environmentalImpact": "text", "confidence": 0.95, "quality_score": 5, "analysis": "TL;DR concise assessment (max 2 lines)", "decisionSupport": "one line of actionable advice" }. CRITICAL RULE: 'confidence' MUST be a decimal number between 0 and 1. 'quality_score' MUST be an integer number between 1 and 10, DO NOT use words.`;
+
+        const result = await model.generateContent([prompt, imagePart]);
         const response = await result.response;
         let text = response.text();
         console.log("✅ Gemini Response Received");
