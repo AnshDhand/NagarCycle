@@ -235,7 +235,8 @@
     <script src="js/pricingEngine.js"></script>
     <script>
         // Global State
-        let aiDetectedType = null;
+        let aiDetectedType = null;   // primary category string
+        let aiSubCategory  = null;   // sub-category string from AI (e.g. "Laptop")
         let aiQualityScore = 5;
 
         // Input Elements
@@ -271,62 +272,56 @@
 
         // Update Price Function
         function updateEstimatedPrice() {
-            const typeKey = getSelectedWasteType();
-            const priceArea = document.getElementById('priceBreakdownArea');
+            const priceArea   = document.getElementById('priceBreakdownArea');
+            const qty         = parseFloat(quantityInput.value) || 0;
+            const unit        = unitSelect.value;   // "units" | "kg" | "tons"
+            const conditionVal = conditionSelect.value;
+            const segregation  = conditionVal.includes('Segregated') ? 'segregated' : 'mixed';
+            const location     = getLocation();
 
-            let engineType = typeKey;
-            if (typeKey === 'recyclable') engineType = 'plastic';
-            if (typeKey === 'ewaste') engineType = 'e-waste';
-
-            // Use AI detected type if it exists to align engine
-            if (aiDetectedType) {
-                if (aiDetectedType.includes('organic')) engineType = 'organic';
-                else if (aiDetectedType.includes('recyclable')) engineType = 'plastic';
-                else if (aiDetectedType.includes('e-waste')) engineType = 'e-waste';
-                else if (aiDetectedType.includes('construction')) engineType = 'construction';
+            // ── Guard: don't price until AI has classified the item ──────────
+            // Without AI data, we have no reliable subCategory to match against.
+            if (!aiSubCategory) {
+                priceArea.innerHTML = '';
+                return;
             }
 
-            const qty = parseFloat(quantityInput.value) || 0;
-            const unit = unitSelect.value;
+            const subCat  = aiSubCategory;
+            const priCat  = aiDetectedType || '';
 
-            let weightInKg = qty;
-            if (unit === 'tons') weightInKg = qty * 1000;
+            if (qty <= 0) { priceArea.innerHTML = ''; return; }
 
-            const conditionVal = conditionSelect.value;
-            const segregation = conditionVal.includes('Segregated') ? 'segregated' : 'mixed';
-            const location = getLocation();
+            const result = window.PricingEngine.calculateFairPrice(
+                subCat, priCat, qty, unit, segregation, aiQualityScore, location
+            );
 
-            if (weightInKg > 0) {
-                const result = window.PricingEngine.calculateFairPrice(engineType, weightInKg, segregation, aiQualityScore, location);
-
-                if (result.isTrash) {
-                    priceArea.innerHTML = `
-                        <hr style="border:0; border-top: 1px dashed rgba(255,255,255,0.1); margin: 15px 0;">
-                        <h4 style="color: var(--danger-color); margin-bottom: 0.5rem; font-size: 1.1rem;">❌ No Commercial Value</h4>
-                        <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 15px;">${result.message}</p>
-                        <a href="discarded.html" class="btn btn-secondary btn-block" style="font-size: 0.85rem;">Locate Nearest Landfill</a>
-                    `;
-                } else {
-                    priceArea.innerHTML = `
-                        <hr style="border:0; border-top: 1px dashed rgba(255,255,255,0.1); margin: 15px 0;">
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1.1rem;">💰 Fair Market Value</h4>
-                        <div style="font-size: 0.95rem; color: var(--text-color); margin-bottom: 10px;">
-                            <strong>${result.wasteType}</strong> detected @ <span style="color: var(--primary-color)">${result.currency}${result.baseRate}/kg</span>
-                        </div>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.75rem; margin-bottom: 15px;">
-                            <span class="tag tag-info">Quality x${result.factors.condition}</span>
-                            <span class="tag tag-success">Segregation x${result.factors.segregation}</span>
-                        </div>
-                        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: var(--text-light); font-size: 0.9rem;">Total Estimated Price:</span>
-                            <strong style="font-size: 1.4rem; color: var(--primary-color); text-shadow: 0 0 10px rgba(143,216,160,0.3);">${result.currency} ${result.totalValue}</strong>
-                        </div>
-                    `;
-                    // Store the final calculated price
-                    localStorage.setItem('last_price', `${result.currency} ${result.totalValue}`);
-                }
+            if (result.isTrash) {
+                priceArea.innerHTML = `
+                    <hr style="border:0; border-top: 1px dashed rgba(255,255,255,0.1); margin: 15px 0;">
+                    <h4 style="color: var(--danger-color); margin-bottom: 0.5rem; font-size: 1.1rem;">❌ No Commercial Value</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 15px;">${result.message}</p>
+                    <a href="discarded.html" class="btn btn-secondary btn-block" style="font-size: 0.85rem;">Locate Nearest Landfill</a>
+                `;
             } else {
-                priceArea.innerHTML = "";
+                const modeLabel = unit === 'units' ? 'per unit' : unit === 'tons' ? 'per ton' : 'per kg';
+                priceArea.innerHTML = `
+                    <hr style="border:0; border-top: 1px dashed rgba(255,255,255,0.1); margin: 15px 0;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1.1rem;">💰 Fair Market Value</h4>
+                    <div style="font-size: 0.95rem; color: var(--text-color); margin-bottom: 10px;">
+                        <strong>${result.label}</strong>
+                        <span style="color: var(--text-light); font-size: 0.85rem;"> · ${result.displayRate}</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.75rem; margin-bottom: 15px;">
+                        <span class="tag tag-info">Quality ${result.qualityScore}/10</span>
+                        <span class="tag tag-success">Segregation ×${result.segregation}</span>
+                        <span class="tag tag-warning">${qty} ${unit}</span>
+                    </div>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--text-light); font-size: 0.9rem;">Total Estimated Price:</span>
+                        <strong style="font-size: 1.6rem; color: var(--primary-color); text-shadow: 0 0 10px rgba(143,216,160,0.3);">₹ ${result.totalValue.toLocaleString('en-IN')}</strong>
+                    </div>
+                `;
+                localStorage.setItem('last_price', `₹ ${result.totalValue.toLocaleString('en-IN')}`);
             }
         }
 
@@ -334,6 +329,7 @@
         window.handleAIResult = function (result) {
             // Update Global State
             aiDetectedType = (result.primaryCategory || 'other').toLowerCase();
+            aiSubCategory  = result.subCategory || null;   // e.g. "Laptop", "PET Bottle"
             aiQualityScore = result.qualityScore || 5;
 
             // Update Advanced UI
@@ -379,7 +375,7 @@
                 <div style="background: rgba(56, 189, 248, 0.1); border-left: 4px solid var(--accent-color); padding: 1.25rem; margin-bottom: 1.5rem; border-radius: 8px;">
                     <strong style="color: var(--accent-color); font-size: 0.95rem; margin-bottom: 6px; display: block;">💡 Decision Support</strong>
                     <p style="margin: 0; font-size: 0.95rem; color: var(--text-color); line-height: 1.5;">
-                        ${result.recommendedAction}. Selling for <strong>Reuse</strong> yields <strong>3x higher value</strong> than recycling materials.
+                        ${result.decisionSupport || result.recommendedAction}
                     </p>
                 </div>
 
