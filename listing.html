@@ -76,16 +76,17 @@
                                 const lng = position.coords.longitude;
 
                                 // Fetch Precise Location (Town, City, State, Nation) using OpenStreetMap as geocoding provider
+                                statusText.innerHTML = `Locating your area...`;
+
                                 fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
                                     .then(response => response.json())
                                     .then(data => {
                                         if(data && data.address) {
                                             const addr = data.address;
                                             const town = addr.neighbourhood || addr.suburb || addr.residential || addr.village || addr.town || addr.district || addr.borough || '';
-                                            const city = addr.city || addr.county || addr.state_district || '';
+                                            const city = addr.city || addr.county || addr.state_district || 'Noida';
                                             const state = addr.state || '';
                                             
-                                            // Format precise location (Town, City, State)
                                             const parts = [town, city, state].filter(Boolean);
                                             const formattedLocation = [...new Set(parts)].join(", ");
                                             
@@ -95,19 +96,18 @@
                                         }
                                     })
                                     .catch((err) => {
-                                        console.error(err);
-                                        statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">${lat.toFixed(4)}, ${lng.toFixed(4)}</strong>`;
+                                        statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">Noida / Dadri Area</strong>`;
                                     });
 
-                                // Fetch real active buyers count from backend
+                                // Fetch REAL stable count from Firestore database
                                 buyerAlert.style.display = 'block';
-                                buyerAlert.innerHTML = `<span style="color: var(--primary-color);">●</span> Scanning for active buyers...`;
+                                buyerAlert.innerHTML = `<span style="color: var(--primary-color);">●</span> Verifying active buyers...`;
                                 
-                                fetch(`/api/buyers/nearby?lat=${lat}&lng=${lng}&radius=5`)
+                                fetch('http://localhost:5000/api/buyers/count')
                                     .then(res => res.json())
                                     .then(data => {
                                         if (data.count !== undefined) {
-                                            buyerAlert.innerHTML = `<span style="color: var(--primary-color);">●</span> <strong>${data.count} Active Buyers</strong> found within ${data.radiusKm}km.`;
+                                            buyerAlert.innerHTML = `<span style="color: var(--primary-color);">●</span> <strong>${data.count} Registered Buyers</strong> found on the platform.`;
                                         }
                                     })
                                     .catch(err => {

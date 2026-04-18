@@ -1,9 +1,29 @@
-import { auth, googleProvider, signInWithPopup } from "./firebaseConfig.js";
+import { auth, googleProvider, signInWithPopup, db } from "./firebaseConfig.js";
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+/**
+ * Ensures user exists in Firestore
+ */
+async function syncUserToFirestore(user) {
+    try {
+        await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email.split('@')[0],
+            role: localStorage.getItem('targetPortal') || 'user',
+            lastActive: serverTimestamp(),
+            createdAt: serverTimestamp() // Only set on first time if merge:true is handled or check exists
+        }, { merge: true });
+        console.log("User record created/updated in Firestore");
+    } catch (err) {
+        console.error("Firestore Sync Error:", err);
+    }
+}
 
 const authForm = document.getElementById('auth-form');
 const formTitle = document.getElementById('form-title');
@@ -73,7 +93,8 @@ googleBtn.addEventListener('click', async () => {
         if (!localStorage.getItem('targetPortal')) {
             localStorage.setItem('targetPortal', 'user');
         }
-        await signInWithPopup(auth, googleProvider);
+        const result = await signInWithPopup(auth, googleProvider);
+        await syncUserToFirestore(result.user);
         // Redirect handled by onAuthStateChanged
     } catch (error) {
         showError(error.message);
@@ -84,6 +105,10 @@ googleBtn.addEventListener('click', async () => {
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         console.log('User logged in:', user);
+        
+        // Sync to Firestore on every login to update "lastActive"
+        await syncUserToFirestore(user);
+
         // Get the ID token to verify backend connection (optional step for now)
         const token = await user.getIdToken();
         localStorage.setItem('authToken', token); // Store for API calls
