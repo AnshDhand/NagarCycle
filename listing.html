@@ -84,19 +84,23 @@
                                         if(data && data.address) {
                                             const addr = data.address;
                                             const town = addr.neighbourhood || addr.suburb || addr.residential || addr.village || addr.town || addr.district || addr.borough || '';
-                                            const city = addr.city || addr.county || addr.state_district || 'Noida';
+                                            const city = addr.city || addr.county || addr.state_district || "";
                                             const state = addr.state || '';
                                             
                                             const parts = [town, city, state].filter(Boolean);
                                             const formattedLocation = [...new Set(parts)].join(", ");
                                             
-                                            statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">${formattedLocation}</strong>`;
+                                            if (formattedLocation) {
+                                                statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">${formattedLocation}</strong>`;
+                                            } else {
+                                                statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">${lat.toFixed(4)}, ${lng.toFixed(4)}</strong>`;
+                                            }
                                         } else {
                                             throw new Error("Address not found");
                                         }
                                     })
                                     .catch((err) => {
-                                        statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">Noida / Dadri Area</strong>`;
+                                        statusText.innerHTML = `Location Acquired: <strong style="color:var(--primary-color)">${lat.toFixed(4)}, ${lng.toFixed(4)}</strong>`;
                                     });
 
                                 // Fetch REAL stable count from Firestore database
@@ -510,7 +514,7 @@
             const file = document.getElementById('wasteImage').files[0];
             const reader = new FileReader();
 
-            reader.onload = function (e) {
+            reader.onload = async function (e) {
                 const imgData = e.target.result;
                 const price = localStorage.getItem('last_price') || "Rs.0";
                 const title = document.getElementById('primaryDisplay').innerText + " (" + document.getElementById('subDisplay').innerText + ")";
@@ -526,6 +530,16 @@
                     distance: (Math.random() * 5).toFixed(1) + " km",
                     quantity: document.getElementById('quantityInput').value + " " + document.getElementById('unitSelect').value
                 };
+
+                // [NEW] Persist to GLOBAL Firestore Database
+                try {
+                    if (window.ListingService) {
+                        await window.ListingService.addListing(newItem);
+                        console.log("Listing synced to Global DB.");
+                    }
+                } catch (err) {
+                    console.error("Failed to sync to Global DB:", err);
+                }
 
                 if (window.MarketplaceItems) {
                     window.MarketplaceItems.push(newItem);
@@ -652,13 +666,14 @@
         </div>
     </div>
 
+    <script src="script.js"></script>
+    <script type="module" src="js/nav-loader.js"></script>
+    <script src="js/trashtalk.js"></script>
+    <script type="module" src="js/listingService.js"></script>
+    <script src="js/matching-engine.js"></script>
+    <script src="js/collector-portal.js"></script>
+    <script src="js/eco-notifications.js"></script>
+    <script src="js/emergency-mode.js"></script>
 </body>
 
 </html>
-<script src="script.js"></script>
-<script type="module" src="js/nav-loader.js"></script></body>
-<script src="js/trashtalk.js"></script>
-<script src="js/matching-engine.js"></script>
-<script src="js/collector-portal.js"></script>
-<script src="js/eco-notifications.js"></script>
-<script src="js/emergency-mode.js"></script>

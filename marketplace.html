@@ -603,14 +603,34 @@
         cb.addEventListener('change', applyFilters);
     });
 
+    // Initial Load
     document.getElementById('distRange').addEventListener('change', applyFilters);
     document.getElementById('minPrice').addEventListener('change', applyFilters);
     document.getElementById('maxPrice').addEventListener('change', applyFilters);
-
-    // Initial Load
-    renderMarketplace();
-    updateCartBadge();
 </script>
+
+<script type="module">
+    import { ListingService } from './js/listingService.js';
+        
+        async function initMarketplace() {
+            console.log("Initializing Marketplace with Global Firestore DB...");
+            const firestoreListings = await ListingService.getAllListings();
+            
+            // Merge Firestore listings with any local ones for development/fallback
+            // but prioritize global DB
+            const localListings = window.MarketplaceItems || [];
+            const allItems = [...firestoreListings, ...localListings];
+            
+            // Filter duplicates by title/seller if necessary, but for now just show all
+            window.MarketplaceItems = allItems;
+            renderMarketplace(allItems);
+        }
+
+        document.addEventListener('DOMContentLoaded', initMarketplace);
+    </script>
+    <script>
+        updateCartBadge();
+    </script>
 
 </body>
 </html>
