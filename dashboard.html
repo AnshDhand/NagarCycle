@@ -209,7 +209,7 @@
             <!-- Eco-Credits / Rewards -->
             <div class="stat-card" style="border-top: 4px solid var(--accent-color);">
                 <div class="stat-label">Eco-Credits Earned</div>
-                <div class="stat-value" style="color: var(--accent-color);">2,450</div>
+                <div id="ecoCreditsValue" class="stat-value" style="color: var(--accent-color);">0</div>
                 <!-- Redeem removed as per request -->
             </div>
 
@@ -323,13 +323,18 @@
                 <td>${(order.type || "").includes('Waste') ? 'E-Waste' : 'Recyclable'}</td>
                 <td>${new Date().toLocaleDateString()}</td>
                 <td><span class="tag tag-${getStatusColor(order.status)}">${order.status}</span></td>
-                <td><a href="tracking.html" style="color: var(--primary-color);">Track Order</a></td>
+                <td><a href="tracking.html" onclick="localStorage.setItem('trackingOrder', JSON.stringify(${JSON.stringify(order).replace(/"/g, '&quot;')}))" style="color: var(--primary-color);">Track Order</a></td>
             `;
             tbody.appendChild(tr);
         });
 
         document.getElementById('totalRevenue').innerText = 'Rs.' + revenue;
         document.getElementById('totalTransactions').innerText = transactions;
+        
+        // --- [NEW] Load EcoPoints from localStorage ---
+        const points = localStorage.getItem('userEcoPoints') || '0';
+        const ecoEl = document.getElementById('ecoCreditsValue');
+        if (ecoEl) ecoEl.innerText = points;
 
 
         // --- 2. Chart.js Logic (Yearly Diversion) ---

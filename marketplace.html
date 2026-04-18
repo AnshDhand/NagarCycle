@@ -301,6 +301,58 @@
         </div>
     </div>
 
+    <!-- Product Details Modal -->
+    <div id="productModal" class="modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+        <div class="modal-content" style="background: var(--card-bg); margin: 5% auto; padding: 2rem; border: 1px solid var(--border-color); width: 90%; max-width: 800px; border-radius: var(--radius-lg); position: relative; color: white;">
+            <span class="close" onclick="closeProductModal()" style="position: absolute; right: 20px; top: 10px; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+                <div>
+                    <img id="modalImage" src="" style="width: 100%; border-radius: 12px; height: 300px; object-fit: cover; box-shadow: var(--glow);">
+                </div>
+                <div>
+                    <h2 id="modalTitle" style="margin-bottom: 0.5rem; font-size: 2rem;">Item Name</h2>
+                    <div id="modalPrice" style="font-size: 1.5rem; color: var(--primary-color); font-weight: 700; margin-bottom: 1rem;">Rs.0</div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                        <span style="font-size: 0.9rem; color: var(--text-light);">🏢 <span id="modalSeller">Seller</span></span>
+                        <span style="font-size: 0.9rem; color: var(--text-light);">📍 <span id="modalDistance">0.0 km</span></span>
+                    </div>
+
+                    <p id="modalDesc" style="color: var(--text-light); line-height: 1.6; margin-bottom: 2rem;">Product description goes here...</p>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" style="flex: 1; padding: 1rem;" onclick="addToCart()">Add to Cart</button>
+                        <button class="btn btn-secondary" style="flex: 1; padding: 1rem;" onclick="buyNow()">Buy Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div id="cartSidebar" class="cart-sidebar">
+        <div class="cart-header">
+            <h3 style="margin: 0;">Your Shopping Cart</h3>
+            <span onclick="toggleCart()" style="cursor: pointer; font-size: 1.5rem;">✕</span>
+        </div>
+        <div class="cart-items" id="cartItemsList">
+            <!-- Dynamic items -->
+        </div>
+        <div class="cart-footer">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-size: 1.2rem; font-weight: bold;">
+                <span>Total</span>
+                <span id="cartTotalDisplay">Rs.0</span>
+            </div>
+            <button class="btn btn-primary btn-block" style="padding: 1.2rem;" onclick="checkoutCart()">Secure Checkout</button>
+        </div>
+    </div>
+
+    <!-- Floating Cart Toggle -->
+    <div class="cart-toggle" onclick="toggleCart()">
+        🛒
+        <div id="cartCountBadge" class="cart-count" style="display: none;">0</div>
+    </div>
+
     <footer>
         <div class="container">
             <div class="footer-content" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem;">
@@ -329,32 +381,8 @@
     <script src="js/matching-engine.js"></script>
     <script src="js/collector-portal.js"></script>
     
-    <script>
-        function renderMarketplace(data) {
-            const grid = document.getElementById('marketplaceGrid');
-            const items = data || window.MarketplaceItems || [];
-            grid.innerHTML = items.map(item => `
-                <div class="listing-card">
-                    <div class="listing-img"><img src="${item.img}" alt="${item.title}"></div>
-                    <div class="listing-content">
-                        <h3>${item.title}</h3>
-                        <div class="listing-price">${item.price}</div>
-                        <div class="listing-meta"><span>📍 ${item.distance}</span></div>
-                    </div>
-                </div>
-            `).join('');
-        }
-        window.onload = () => renderMarketplace();
-    </script>
-</body>
 
-</html>
-<script src="js/matching-engine.js"></script>
-<script src="js/collector-portal.js"></script>
-<script src="js/eco-notifications.js"></script>
-<script src="js/emergency-mode.js"></script>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     let currentItem = null;
     let cart = JSON.parse(localStorage.getItem('shoppingCart') || '[]');
@@ -402,8 +430,8 @@
         setTimeout(() => document.getElementById('cartSidebar').classList.add('open'), 500);
     };
 
-    window.removeFromCart = function (id) {
-        cart = cart.filter(item => item.id !== id);
+    window.removeFromCart = function (instanceId) {
+        cart = cart.filter(item => item.cartInstanceId !== instanceId);
         saveCart();
         renderCart();
     };
@@ -431,7 +459,7 @@
 
         let total = 0;
         list.innerHTML = cart.map(item => {
-            const priceNum = parseInt(item.price.replace('Rs.', ''));
+            const priceNum = parseInt(item.price.replace(/[^0-9]/g, '')) || 0;
             total += priceNum;
             return `
                 <div class="cart-item">
@@ -440,7 +468,7 @@
                         <div style="font-weight:600">${item.title}</div>
                         <div style="color:var(--primary-color)">${item.price}</div>
                     </div>
-                    <div onclick="removeFromCart(${item.id})" style="cursor:pointer; color:#ef4444">🗑️</div>
+                    <div onclick="removeFromCart(${item.cartInstanceId})" style="cursor:pointer; color:#ef4444" title="Discard Item">🗑️</div>
                 </div>
             `;
         }).join('');
@@ -449,7 +477,7 @@
     }
 
     window.buyNow = function () {
-        localStorage.setItem('checkoutItem', JSON.stringify(currentItem));
+        localStorage.setItem('checkoutItem', JSON.stringify([currentItem]));
         window.location.href = 'payment.html';
     };
 
@@ -458,9 +486,7 @@
             alert("Cart is empty!");
             return;
         }
-        // For simplicity, we checkout the first item or a summary
-        // In a real app, you'd pass the whole array
-        localStorage.setItem('checkoutItem', JSON.stringify(cart[0]));
+        localStorage.setItem('checkoutItem', JSON.stringify(cart));
         window.location.href = 'payment.html';
     };
 
@@ -585,4 +611,7 @@
     renderMarketplace();
     updateCartBadge();
 </script>
+
+</body>
+</html>
 

@@ -69,10 +69,6 @@ authForm.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Processing...';
 
     try {
-        // Save selected portal for redirection
-        const selectedPortal = document.querySelector('input[name="portal-type"]:checked')?.value || 'user';
-        localStorage.setItem('targetPortal', selectedPortal);
-
         if (isLogin) {
             await signInWithEmailAndPassword(auth, email, password);
         } else {
@@ -113,17 +109,8 @@ onAuthStateChanged(auth, async (user) => {
         const token = await user.getIdToken();
         localStorage.setItem('authToken', token); // Store for API calls
 
-        // Handle Portal Redirection
-        const targetPortal = localStorage.getItem('targetPortal') || 'user';
-        
-        if (targetPortal === 'collector') {
-            // Redirect to index and signal to open collector portal
-            localStorage.setItem('openCollectorOnLoad', 'true');
-            window.location.href = 'index.html';
-        } else {
-            // Redirect to user dashboard
-            window.location.href = 'dashboard.html';
-        }
+        // Redirect to dashboard
+        window.location.href = 'dashboard.html';
     }
 });
 
