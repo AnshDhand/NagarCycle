@@ -79,21 +79,6 @@ NAGARcycle
 └── Documentation
 ```
 
-
-
-##  Team Contributions
-
-### Naina Srivastava
-- Machine Learning Development
-- Waste Classification System
-- Backend Development
-- API Integration Support
-
-### Team Members
-- Ansh Dhand
-- Kashvi Khanna
-- Vatsal Dwivedi
-
 ##  Objectives
 
 - Promote sustainable waste management
@@ -115,13 +100,4 @@ NAGARcycle
 - Integrated Machine Learning with real-world waste management challenges
 - Combined AI, Cloud Services, Payment Systems, and Mapping Technologies into a unified platform
 
-## 📬 Contact
-
-For collaboration or feedback:
-
-**Naina Srivastava**
-- GitHub: https://github.com/nainasrivastava7
-- LinkedIn: https://www.linkedin.com/in/naina-srivastava-55a156355/
-
-
-⭐ Building technology for a cleaner and smarter future.
+Building technology for a cleaner and smarter future.
